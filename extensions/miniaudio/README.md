@@ -93,6 +93,8 @@ int sampleRate = audio.GetDeviceSampleRate();
 ma_format format = audio.GetDeviceFormat();
 ```
 
+> **Note:** In the example above `audio` is the instance of `olc::ext::Miniaudio::AudioEngine`
+
 ---
 
 ## olc::ext::Miniaudio::Sound
@@ -118,6 +120,7 @@ audio.CreateSoundFromMemory(mySound, audioData.data(), audioData.size());
 // Or pass vector directly
 audio.CreateSoundFromMemory(mySound, audioData);
 ```
+> **Note:** In the example above `audio` is the instance of `olc::ext::Miniaudio::AudioEngine`
 
 ### Playback Control
 
@@ -265,7 +268,7 @@ audio.CreateWaveform(
     440.0                                        // Frequency in Hz (A4 note)
 );
 ```
-
+> **Note:** In the example above `audio` is the instance of `olc::ext::Miniaudio::AudioEngine`
 ### Playback Control
 
 #### Play
@@ -297,7 +300,7 @@ sineWave.SetFrequency(220.0);   // One octave lower
 
 #### Change Type
 ```cpp
-// Switch between waveform types
+// Set waveform types
 sineWave.SetType(olc::ext::Miniaudio::Waveform::Type::Square);
 sineWave.SetType(olc::ext::Miniaudio::Waveform::Type::Triangle);
 sineWave.SetType(olc::ext::Miniaudio::Waveform::Type::Sawtooth);
@@ -324,6 +327,9 @@ if(sineWave.IsLoaded())
 ### Synthesizer Callback
 
 Provide custom synthesis function for procedural audio generation:
+> **HELP:** I need a sound guy to help flesh out this example so that it's actually useful. I'm not versed enough to do something actually useful here. Thanks to whoever steps up!
+> 
+> -Moros1138
 
 ```cpp
 class MyGame : public olc::PixelGameEngine
@@ -383,6 +389,8 @@ audio.SetDataCallback([this](float* pFramesOut, ma_uint64 frameCount)
 // Clear callback later
 audio.ClearDataCallback();
 ```
+> **Note:** This example doesn't do anything useful, that's up to you!
+
 ---
 
 ## Troubleshooting
@@ -400,6 +408,12 @@ audio.ClearDataCallback();
     - Browser audio requires user interaction before playing. Ensure playback is triggered by a user event (click, key press)
 
 ---
+
+## Acknowledgements (From Moros1138)
+
+I'd like to give a special thanks to JavidX9 (aka OneLoneCoder), AniCator, JustinRichardsMusic, and everybody else who was a part of that audiophile conversation when I asked for help! Your patience and feedback made this project possible. Thank you!
+
+Also, for v2 of this extension, I'd also like to single out sigonasr2 (Dense Dance 2π) for the waveform functionality and for crafting the demos for them! While the waveform and synthesis has seen some change, overall the v3 version of this extension wouldn't have this functionality were it not for sigonasr2's contributions. Thank you Sig!
 
 ## License
 
