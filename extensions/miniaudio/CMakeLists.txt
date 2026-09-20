@@ -7,8 +7,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(miniaudio)
 
-add_example(olcPGE3_Miniaudio olcPGE3_Miniaudio.cpp)
+add_example(ext_demo_Miniaudio demo_Miniaudio.cpp)
 
-target_include_directories(olcPGE3_Miniaudio PRIVATE ${miniaudio_SOURCE_DIR})
+target_include_directories(ext_demo_Miniaudio PRIVATE ${miniaudio_SOURCE_DIR})
 
-handle_assets(olcPGE3_Miniaudio ${CMAKE_CURRENT_SOURCE_DIR}/assets)
+handle_assets(ext_demo_Miniaudio ${CMAKE_CURRENT_SOURCE_DIR}/assets)
