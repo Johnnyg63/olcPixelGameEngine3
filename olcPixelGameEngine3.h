@@ -6058,6 +6058,7 @@ namespace olc::host
 #include <sys/mman.h>
 #include <unistd.h>
 #include <cstring>
+#include <poll.h>
 
 #include "libdecor.h"
 
@@ -13103,7 +13104,7 @@ namespace olc::host
     {
         pPrimaryPGE->OnPreContextStart();
 
-        		// Create system thread - handles gpu context
+        // Create system thread - handles gpu context
 		std::thread threadSystem([this]()
 			{
 				// Notify start of system thread
@@ -13131,11 +13132,16 @@ namespace olc::host
 				}
 			});
         
+        pollfd decor_wl_fd {.fd = libdecor_get_fd(decor_context), .events = POLLIN};
+
         bool keep_running = true;
         while(systemActive && keep_running) {
             if(decor_context) {
-                std::lock_guard<std::mutex> l{decor_mutex};
-                keep_running = libdecor_dispatch(decor_context, 0) >= 0;
+                poll(&decor_wl_fd, 1, -1);
+                {
+                    std::lock_guard<std::mutex> l{decor_mutex};
+                    keep_running = libdecor_dispatch(decor_context, 0) >= 0;
+                }
             }
         }
         
