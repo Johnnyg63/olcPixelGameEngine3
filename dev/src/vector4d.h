@@ -370,7 +370,7 @@ namespace std {
 
 	
 	template<typename T, size_t N>
-	struct tuple_element<N, olc::v_4d<T>> : tuple_element<N, tuple<T, T>> {};
+	struct tuple_element<N, olc::v_4d<T>> : tuple_element<N, tuple<T, T, T, T>> {};
 }
 
 #define PGE_VECTOR4D_DECLARED 1
