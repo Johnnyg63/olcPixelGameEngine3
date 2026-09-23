@@ -183,6 +183,26 @@ namespace olc
 		{
 			return { static_cast<F>(this->x), static_cast<F>(this->y), static_cast<F>(this->z), static_cast<F>(this->w) };
 		}
+
+		template<size_t N>
+		auto& get() & {
+			return std::get<N>(xyzw);
+		}
+
+		template<size_t N>
+		const auto& get() const & {
+			return std::get<N>(xyzw);
+		}
+
+		template<size_t N>
+		auto&& get() && {
+			return std::get<N>(xyzw);
+		}
+
+		template<size_t N>
+		const auto& get() const && {
+			return std::get<N>(xyzw);
+		}
 	};
 
 	// Multiplication operator overloads between vectors and scalars, and vectors and vectors
@@ -343,6 +363,16 @@ namespace olc
 	typedef v_4d<float> vf4d;
 	typedef v_4d<double> vd4d;
 }
+
+namespace std {
+	template<typename T>
+	struct tuple_size<olc::v_4d<T>> : std::integral_constant<std::size_t, 4> {};
+
+	
+	template<typename T, size_t N>
+	struct tuple_element<N, olc::v_4d<T>> : tuple_element<N, tuple<T, T, T, T>> {};
+}
+
 #define PGE_VECTOR4D_DECLARED 1
 #endif
 //! END DECLARATION
