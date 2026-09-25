@@ -245,7 +245,7 @@
 				olcPGE3_Extensions.cpp,
 				olcPGE3_Fish.cpp,
 				olcPGE3_FrameGraph.cpp,
-				olcPGE3_ImageQuads.cpp,
+				"olcPGE3_ImageQuads-FromMemory.cpp",
 				olcPGE3_ImageRect.cpp,
 				olcPGE3_ImageRegion.cpp,
 				olcPGE3_ImageScaleRotate.cpp,
@@ -702,7 +702,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = "";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.olcpge.olcPGE3iOS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onelonecoder.olcPGE3iOSSH;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -733,7 +733,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = "";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.olcpge.olcPGE3iOS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onelonecoder.olcPGE3iOSSH;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -907,7 +907,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = "";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.olcpge.olcPGE3iOS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onelonecoder.olcPGE3iOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -938,7 +938,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = "";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.olcpge.olcPGE3iOS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onelonecoder.olcPGE3iOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

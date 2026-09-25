@@ -119,6 +119,11 @@
 		#define OLC_IMAGELOADER_CLASS ImageLoader_MacOS
 	#endif
 
+	#if OLC_HOST == OLC_HOST_IOS
+		#define OLC_IMAGELOADER OLC_IMAGELOADER_IOS
+		#define OLC_IMAGELOADER_CLASS ImageLoader_iOS
+	#endif
+
 	#if OLC_HOST == OLC_HOST_LINUX_X11 || OLC_HOST == OLC_HOST_LINUX_WAYLAND
 		#define OLC_IMAGELOADER OLC_IMAGELOADER_LIB_PNG
 		#define OLC_IMAGELOADER_CLASS ImageLoader_LibPNG
@@ -134,10 +139,6 @@
 		#define OLC_IMAGELOADER_CLASS ImageLoader_NDKImageDecoder
 	#endif
 
-	#if OLC_HOST == OLC_HOST_IOS
-		#define OLC_IMAGELOADER OLC_IMAGELOADER_IOS
-		#define OLC_IMAGELOADER_CLASS ImageLoader_iOS
-	#endif
 #endif
 
 // We wait until after the platform specific image loader is selected

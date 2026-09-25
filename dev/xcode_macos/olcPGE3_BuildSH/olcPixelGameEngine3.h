@@ -8,13 +8,13 @@
 	olcPixelGameEngine3.h
 
 	+-------------------------------------------------------------+
-	|           OneLoneCoder Pixel Game Engine v3.00 Beta A       |
+	|           OneLoneCoder Pixel Game Engine v3.00 Beta B       |
 	|  "What do you need? Pixels... Lots of Pixels..." - javidx9  |
 	+-------------------------------------------------------------+
 
 	What is this?
 	~~~~~~~~~~~~~
-	olc::PixelGameEngine is a single file, cross platform graphics and userinput
+	olc::PixelGameEngine is a single file, cross platform graphics and user input
 	framework used for games, visualisations, algorithm exploration and learning.
 	It was developed by YouTuber "javidx9" as an assistive tool for many of his
 	videos. The goal of this project is to provide high speed graphics with
@@ -83,13 +83,20 @@
 	AI Disclosure
 	~~~~~~~~~~~~~
 	Parts of this code may have been generated with the assistance of AI tools. Instances
-	of such usage have typically been restricted to the tedious and repetitious through 
+	of such usage would have typically been restricted to the tedious and repetitious through 
 	the use of auto-completion and other small code generation helpers. This community
 	driven project has been developed on numerous platforms, across countless tools and
 	environments, by different people over a number of years. As such, it is impossible
-	to categorically state which sections of code may have had AI assistance. Regardless,
-	the entire codebase has been architected, reviewed and tested by human developers
-	mostly for fun and learning purposes, and is intended to be used in that spirit.
+	to know which sections of code may have had AI assistance. Regardless, the entire codebase 
+	has been architected, implemented, reviewed and tested by human developers mostly for fun 
+	and learning purposes, and it is intended to be used in that spirit.
+
+	"You know you don't have to use AI if you like coding right?" - javidx9
+
+	Identified Uses of AI
+	~~~~~~~~~~~~~~~~~~~~~
+	1) NxN Matrix Inversion - After 4 attempts at getting the sequencing right following
+	the wikipedia articles (VS Copilot)
 
 	Primary Contributors
 	~~~~~~~~~~~~~~~~~~~~
@@ -172,6 +179,7 @@
 #define OLC_HOST_EMSCRIPTEN 6
 #define OLC_HOST_ANDROID 7
 #define OLC_HOST_IOS 8
+
 
 #if !defined(OLC_HOST)
 	#if defined(_WIN32)
@@ -256,6 +264,11 @@
 		#define OLC_IMAGELOADER_CLASS ImageLoader_MacOS
 	#endif
 
+	#if OLC_HOST == OLC_HOST_IOS
+		#define OLC_IMAGELOADER OLC_IMAGELOADER_IOS
+		#define OLC_IMAGELOADER_CLASS ImageLoader_iOS
+	#endif
+
 	#if OLC_HOST == OLC_HOST_LINUX_X11 || OLC_HOST == OLC_HOST_LINUX_WAYLAND
 		#define OLC_IMAGELOADER OLC_IMAGELOADER_LIB_PNG
 		#define OLC_IMAGELOADER_CLASS ImageLoader_LibPNG
@@ -271,10 +284,6 @@
 		#define OLC_IMAGELOADER_CLASS ImageLoader_NDKImageDecoder
 	#endif
 
-	#if OLC_HOST == OLC_HOST_IOS
-		#define OLC_IMAGELOADER OLC_IMAGELOADER_IOS
-		#define OLC_IMAGELOADER_CLASS ImageLoader_iOS
-	#endif
 #endif
 
 // We wait until after the platform specific image loader is selected
@@ -668,7 +677,7 @@ namespace olc
 	}
 }
 
-#if OLC_HOST == OLC_HOST_MACOS || OLC_HOST == OLC_HOST_IOS
+#if OLC_HOST == OLC_HOST_MACOS || OLC_HOST == OLC_HOST_IOS 
 #pragma clang diagnostic pop
 #endif
 
@@ -857,6 +866,26 @@ namespace olc
 		{
 			return { static_cast<F>(this->x), static_cast<F>(this->y) };
 		}
+
+		template<size_t N>
+		auto& get() & {
+			return std::get<N>(xy);
+		}
+
+		template<size_t N>
+		const auto& get() const & {
+			return std::get<N>(xy);
+		}
+
+		template<size_t N>
+		auto&& get() && {
+			return std::get<N>(xy);
+		}
+
+		template<size_t N>
+		const auto& get() const && {
+			return std::get<N>(xy);
+		}
 	};
 
 	// Multiplication operator overloads between vectors and scalars, and vectors and vectors
@@ -1018,6 +1047,16 @@ namespace olc
 	typedef v_2d<float> vf2d;
 	typedef v_2d<double> vd2d;
 }
+
+namespace std {
+	template<typename T>
+	struct tuple_size<olc::v_2d<T>> : std::integral_constant<std::size_t, 2> {};
+
+	
+	template<typename T, size_t N>
+	struct tuple_element<N, olc::v_2d<T>> : tuple_element<N, tuple<T, T>> {};
+}
+
 #define PGE_VECTOR2D_DECLARED 1
 #endif
 
@@ -1190,6 +1229,26 @@ namespace olc
 		{
 			return { static_cast<F>(this->x), static_cast<F>(this->y), static_cast<F>(this->z), static_cast<F>(this->w) };
 		}
+
+		template<size_t N>
+		auto& get() & {
+			return std::get<N>(xyzw);
+		}
+
+		template<size_t N>
+		const auto& get() const & {
+			return std::get<N>(xyzw);
+		}
+
+		template<size_t N>
+		auto&& get() && {
+			return std::get<N>(xyzw);
+		}
+
+		template<size_t N>
+		const auto& get() const && {
+			return std::get<N>(xyzw);
+		}
 	};
 
 	// Multiplication operator overloads between vectors and scalars, and vectors and vectors
@@ -1317,6 +1376,13 @@ namespace olc
 		return lhs;
 	}
 
+	template<class TL, class TR>
+	inline constexpr auto operator -= (v_4d<TL>& lhs, const v_4d<TR>& rhs)
+	{
+		lhs = lhs - rhs;
+		return lhs;
+	}
+
 	// Greater/Less-Than Operator overloads - mathematically useless, but handy for "sorted" container storage
 	template<class TL, class TR>
 	inline constexpr bool operator < (const v_4d<TL>& lhs, const v_4d<TR>& rhs)
@@ -1350,6 +1416,16 @@ namespace olc
 	typedef v_4d<float> vf4d;
 	typedef v_4d<double> vd4d;
 }
+
+namespace std {
+	template<typename T>
+	struct tuple_size<olc::v_4d<T>> : std::integral_constant<std::size_t, 4> {};
+
+	
+	template<typename T, size_t N>
+	struct tuple_element<N, olc::v_4d<T>> : tuple_element<N, tuple<T, T, T, T>> {};
+}
+
 #define PGE_VECTOR4D_DECLARED 1
 #endif
 
@@ -2163,7 +2239,7 @@ namespace olc
 		template<typename Q>
 		inline constexpr void rotate(const Q& v, const olc::v_2d<T>& p = { 0,0 })
 		{
-			m_stackForward.push(m_stackForward.top() * (olc::m_3d<T>::translation(-p) * olc::m_3d<T>::rotation(v) * olc::m_3d<T>::translation(p)));
+			m_stackForward.push(m_stackForward.top() * (olc::m_3d<T>::translation(p) * olc::m_3d<T>::rotation(v) * olc::m_3d<T>::translation(-p)));
 			m_stackInverse.push(m_stackForward.top().invert());
 		}
 
@@ -2283,6 +2359,12 @@ namespace olc
 		Image() = default;
 		virtual ~Image() = default;
 
+		// Prevent copying & accidental duplication
+		Image(const Image&) = delete;
+		Image& operator=(const Image&) = delete;
+		Image(Image&&) = default;
+		Image& operator=(Image&&) = default;
+
 	public:
 		// Creates nothing but an array of pixels in system memory. Normal users
 		// should never need to call this method. If you want to construct an
@@ -2315,6 +2397,7 @@ namespace olc
 		bool BoundToCPU() const;
 
 	public:
+		olc::ImageRegion all();
 		olc::ImageRegion region(const olc::vf2d pos, const olc::vf2d& size);
 		olc::ImageRegion region(const olc::vf2d& vTL, const olc::vf2d& vTR, const olc::vf2d& vBL, const olc::vf2d& vBR);
 		olc::ImageRegion flipV();
@@ -2430,7 +2513,15 @@ namespace olc
 #if !defined(PGE_FONT_DECLARED)
 namespace olc
 {
+#if defined(OLC_USE_WXWIDGETS)
+	namespace wx
+	{
+		class PGE3Core;
+	}
+#else
 	class PGEWindow;
+#endif
+
 
 	struct FontGlyph	
 	{
@@ -2473,7 +2564,11 @@ namespace olc
 	namespace pgeguts
 	{
 		// Create the classic PGE font
+#if defined(OLC_USE_WXWIDGETS)
+		void CreateClassicFont(olc::wx::PGE3Core* pge);
+#else
 		void CreateClassicFont(olc::PGEWindow* pge);
+#endif
 	}
 
 }
@@ -2831,14 +2926,71 @@ namespace olc
 			const olc::Pixel col = olc::Colour::WHITE,
 			const olc::Pixel tint = olc::Colour::WHITE);
 
+		// Lower-Level Pixel Manipulation
+
 		// Read a pixel from an image (guarantees fresh)
 		olc::Pixel GetPixel(
 			olc::Image& image, 
-			const olc::vf2d& pos);
+			const olc::vf2d& pos,
+			const olc::Pixel failcol = olc::Colour::BLACK);
+
+		// Write a pixel to an image
+		void SetPixel(
+			olc::Image& image,
+			const olc::vf2d& pos,
+			const olc::Pixel col = olc::Colour::WHITE);
 
 		// Read a pixel from target image (guarantees fresh)
 		olc::Pixel GetPixel(			
-			const olc::vf2d& pos);
+			const olc::vf2d& pos,
+			const olc::Pixel failcol = olc::Colour::BLACK);
+
+		// Write a pixel to target image 
+		void SetPixel(
+			const olc::vf2d& pos,
+			const olc::Pixel col = olc::Colour::WHITE);
+
+		// Read an untransformed pixel from an image (guarantees fresh)
+		olc::Pixel GetRawPixel(
+			olc::Image& image,
+			const olc::vi2d& pos,
+			const olc::Pixel failcol = olc::Colour::BLACK);
+
+		// Write an untransformed pixel to an image
+		void SetRawPixel(
+			olc::Image& image,
+			const olc::vi2d& pos,
+			const olc::Pixel col = olc::Colour::WHITE);
+
+		// Read an untransformed pixel from target image (guarantees fresh)
+		olc::Pixel GetRawPixel(
+			const olc::vi2d& pos,
+			const olc::Pixel failcol = olc::Colour::BLACK);
+
+		// Write an untransformed pixel to target image
+		void SetRawPixel(
+			const olc::vi2d& pos,
+			const olc::Pixel col = olc::Colour::WHITE);
+
+		// Read an untransformed pixel from a target image with no bounds checking (gurantees fresh)
+		olc::Pixel GetUnsafeRawPixel(
+			olc::Image& image,
+			const olc::vi2d& pos);
+
+		// Write an untransformed pixel to a target image with no bounds checking
+		void SetUnsafeRawPixel(
+			olc::Image& image,
+			const olc::vi2d& pos,
+			const olc::Pixel col = olc::Colour::WHITE);
+
+		// Read an untransformed pixel from target image with no bounds checking (gurantees fresh)
+		olc::Pixel GetUnsafeRawPixel(
+			const olc::vi2d& pos);
+
+		// Write an untransformed pixel to target image with no bounds checking
+		void SetUnsafeRawPixel(
+			const olc::vi2d& pos,
+			const olc::Pixel col = olc::Colour::WHITE);
 
 		// Clear entire draw target to specific colour
 		void Clear(const olc::Pixel& col);
@@ -3888,6 +4040,7 @@ namespace olc
 #define PGE_HW_TOUCH_DECLARED 1
 #endif
 
+#if OLC_HOST != OLC_HOST_WXWIDGETS
 #if !defined(PGE_WINDOW_DECLARED)
 namespace olc
 {
@@ -4377,172 +4530,10 @@ namespace olc
 }
 #define PGE_CORE_DECLARED 1
 #endif
-
-
-
-
-
-
-
-
-
-#if OLC_HOST == OLC_HOST_NONE
-
-namespace olc::host
-{
-	class Host_None : public olc::host::Host
-	{
-	public: // OS Window Handling
-		// Make OS Create a window frame, associated with olc::Window
-		bool AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen) override;			
-		// Make OS Close a window frame, associated with olc::Window
-		bool CloseWindowFrame(olc::Window* pWindow) override;
-		// Make OS Update a window frame title, associated with olc::Window
-		bool UpdateWindowFrameTitle(olc::Window* pWindow) override;
-		// Get OS-specific window descriptor(s) for given olc::Window
-		std::vector<void*> GetHostWindowDescriptor(olc::Window* pWindow) override;
-		// Wait for OS desktop refresh (for smooooth vsync)
-		bool SyncWithDesktopComposite() override;
-
-	public: // Platform specific Mouse Control
-		// Force the mouse position in pixels relative to window
-		bool SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos) override;
-		// Show or hide mouse cursor for given window
-		bool SetMouseVisible(olc::Window* pWindow, const bool bVisible) override;
-
-	public: // OS Specific Environment Information
-		virtual olc::KeyboardLayout GetKeyboardLayout() const override;
-
-	public: // Platform Specific OS<->PGE Linkage
-		// Called at very start of application
-		bool OnApplicationStart(olc::PixelGameEngine* pPrimary) override;
-		// Called to start the host - this may mean different things on different hosts
-		// It MUST block until system is requested to exit
-		bool StartSystem() override;
-		// Called to stop the host, and shutdown all resources
-		bool StopSystem() override;
-		// Called at start of system event loop
-		bool OnSystemThreadStart() override;
-		// Called to perform primary window update
-		bool OnSystemTick() override;
-		// Called at end of system event loop
-		bool OnSystemThreadEnd() override;
-		// Called at very end of application
-		bool OnApplicationEnd() override;
-	private:
-		bool systemActive = false;
-	};
-}
 #endif
 
-#if OLC_HOST == OLC_HOST_WINDOWS
-#if defined(UNICODE) || defined(_UNICODE)
-	#define olcT(s) L##s
-#else
-	#define olcT(s) s
-#endif
-
-#define _WINSOCKAPI_
-
-#if !defined(VC_EXTRALEAN)
-#define VC_EXTRALEAN
-#endif
-
-#if !defined(NOMINMAX)
-#define NOMINMAX
-#endif
-
-// In Code::Blocks
-#if !defined(_WIN32_WINNT)
-	#ifdef HAVE_MSMF
-		#define _WIN32_WINNT 0x0600 // Windows Vista
-	#else
-		#define _WIN32_WINNT 0x0603 // Windows 8.1
-	#endif
-#endif
-
-// Embrace MSVC superiority
-#pragma comment(lib, "user32.lib")
-#pragma comment(lib, "gdi32.lib")
-#pragma comment(lib, "Dwmapi.lib")
-
-#include <dwmapi.h>
-#include <windows.h>
-#include <winuser.h>
-#include <windowsx.h>
-#undef _WINSOCKAPI_
-
-namespace olc
-{
-	namespace host
-	{
-		// Host for Windows OS - Single Window Only!
-		class Host_Windows_WinAPI : public olc::host::Host
-		{
-			
-
-		public:
-			Host_Windows_WinAPI();
-			virtual ~Host_Windows_WinAPI() {};
 
 
-		public: // OS Window Handling
-			// Make OS Create a window frame, associated with olc::Window
-			bool AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen) override;
-			// Make OS Close a window frame, associated with olc::Window
-			bool CloseWindowFrame(olc::Window* pWindow) override;
-			// Make OS Update a window frame title, associated with olc::Window
-			bool UpdateWindowFrameTitle(olc::Window* pWindow) override;
-			// Get OS-specific window descriptor(s) for given olc::Window
-			std::vector<void*> GetHostWindowDescriptor(olc::Window* pWindow) override;
-			// Wait for OS desktop refresh (for smooooth vsync)
-			bool SyncWithDesktopComposite() override;
-
-		public: // Platform specific Mouse Control
-			bool SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos) override;
-			bool SetMouseVisible(olc::Window* pWindow, const bool bVisible) override;			
-			bool SetFullScreen(olc::Window* pWindow, const bool bFullScreen) override;
-
-		public: // OS Specific Environment Information
-			olc::KeyboardLayout GetKeyboardLayout() const override;
-
-		public:
-			// Called at very start of application
-			bool OnApplicationStart(olc::PixelGameEngine* pPrimary) override;
-			// Called to start the host - this may mean different things on different hosts
-			bool StartSystem() override;
-			// Called to stop the host, and shutdown all resources
-			bool StopSystem() override;
-			// Called at start of system event loop
-			bool OnSystemThreadStart() override;
-			// Called to perform primary window update
-			bool OnSystemTick() override;
-			// Called at end of system event loop
-			bool OnSystemThreadEnd() override;
-			// Called at very end of application
-			bool OnApplicationEnd() override;
-
-
-
-		private: // Windows OS Specific Things
-			std::unordered_map<size_t, HWND> mapUID2HWND;
-			std::unordered_map<HWND, olc::Window*> mapHWND2PTR;
-			std::wstring ConvertS2W(std::string s);
-			std::atomic<bool> systemActive = false;
-			HCURSOR hCursorDefault = nullptr;
-			HCURSOR hCursorNow = nullptr;
-			DWORD ConvertPGE2WindowStyle(const olc::Window* pWindow);
-
-		public:
-			LRESULT OnWindowEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-			// Map of system keycodes to olc::Keycodes
-			std::unordered_map<int32_t, olc::Key> mapKeys;
-
-		};
-	}
-}
-#endif
 
 #if OLC_HOST == OLC_HOST_MACOS
 #include <objc/objc.h>
@@ -5792,136 +5783,6 @@ namespace olc {
     } // namespace apis
 } // namespace olc
 
-
-
-
-#include <dispatch/dispatch.h>  // Grand Central Dispatch:  Apple's C-based API for managing concurrent operations on macOS and iOS.
-#include <pthread.h>            // POSIX threads: Used for pthread_main_np() to check if current thread is the main thread
-namespace olc
-{
-    namespace host
-    {
-        // Manages our MacOS Host
-        class Host_Apple_MacOS : public olc::host::Host
-        {
-        public:
-            olc::Window* pPGEwindow = nullptr;                  // Pointer to PGE Window
-            
-        public:
-            Host_Apple_MacOS();
-            virtual ~Host_Apple_MacOS() {};
-            
-        public:
-            HostError GetLastError() const { return lastError; }
-
-        public:
-			virtual bool AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen) override;
-			virtual bool CloseWindowFrame(olc::Window* pWindow) override;
-			virtual bool UpdateWindowFrameTitle(olc::Window* pWindow) override;
-
-			virtual std::vector<void*> GetHostWindowDescriptor(olc::Window* pWindow) override;
-
-			// Wait for entire host desktop refresh (for smooooth vsync),
-			virtual bool SyncWithDesktopComposite() override;
-            
-        public: // Platform specific Mouse Control
-            // Force the mouse position in pixels relative to window
-            virtual bool SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos) override;
-            // Show or hide mouse cursor for given window
-            virtual bool SetMouseVisible(olc::Window* pWindow, const bool bVisible) override;
-            // Set a window to fullscreen or not fullscreen
-            virtual bool SetFullScreen(olc::Window* pWindow, const bool bFullScreen) override;
-
-        public: // OS Specific Environment Information
-            virtual olc::KeyboardLayout GetKeyboardLayout() const override;
-
-        public: // Platform Specific OS<->PGE Linkage
-            // Called at very start of application
-            virtual bool OnApplicationStart(olc::PixelGameEngine* pPrimary) override;
-            // Called to start the host - this may mean different things on different hosts
-            // It MUST block until system is requested to exit
-            virtual bool StartSystem() override;
-            // Called to stop the host, and shutdown all resources
-            virtual bool StopSystem() override;
-            // Called at start of system event loop
-            virtual bool OnSystemThreadStart() override;
-            // Called to perform primary window update
-            virtual bool OnSystemTick() override;
-            // Called at end of system event loop
-            virtual bool OnSystemThreadEnd() override;
-            // Called at very end of application
-            virtual bool OnApplicationEnd() override;
-
-        protected:
-			HostError lastError = HostError::None;
-
-        public:
-            // MacOS Application and Window pointers
-            std::unique_ptr<olc::apis::macos::Application> pMacApplication = nullptr;
-            std::unique_ptr<olc::apis::macos::Window> pMacOSWindow = nullptr;
-            std::unique_ptr<olc::apis::macos::EventHandler> pMacOSEventHandler = nullptr;
-            std::shared_ptr<olc::apis::macos::OpenGLRenderer> pMacOSOpenGLRenderer = nullptr;
-
-            void* pMacGLConextObj = nullptr;
-            std::once_flag intialAppFlag;
-            
-            // Map of system keycodes to olc::Keycodes
-            std::unordered_map<int32_t, olc::Key> mapKeys;
-    
-        private:      
-            enum MAINTASKS{
-                NONE,
-                CREATE_OPENGL_RENDERER,
-                RESIZE_WINDOW,
-                BECOME_ACTIVE,
-                RESIGN_ACTIVE,
-                MINIMIZE_WINDOW,
-                DEMINIMIZE_WINDOW
-            };
-            
-            // Internal Mac OS functions
-            bool ExecutePendingMainThreadTasks(void);       // Execute pending tasks on main thread
-            bool MainThreadTasks(void);                     // Handle main thread tasks
-            bool AddPendingMainThreadTask(MAINTASKS task);  // Add a pending task to main thread. Note: You should ever add tasks that require main thread execution only from the PGE thread
-            bool CreateCGLContextObj();                     // Create CGL Context Object
-            std::vector<MAINTASKS> vPendingMainThreadTasks; // Vector of pending main thread tasks
-            
-            std::vector<void*> vMacOSWindowDescriptors; // Vector to hold window descriptors
-            bool enableVSync = false;                   // VSync enabled flag
-            bool bSkipFrame = false;                    // Flag to indicate if frame should be skipped 
-
-            // Thread synchronization for PGE Thread V Main thread
-            mutable std::mutex      mainThreadPendingTasksMutex;    // Mutex for main thread pending tasks
-            std::condition_variable mainThreadResetCondition;       // Condition variable for main thread reset
-            std::atomic<bool>       isMainThreadResetting{false};   // Atomic flag for resetting main thread 
-
-            mutable std::mutex      pgeThreadPendingTasksMutex;    // Mutex for PGE thread pending tasks
-            std::condition_variable pgeThreadResetCondition;       // Condition variable for PGE thread reset
-            std::atomic<bool>       isPGEThreadResetting{true};    // Atomic flag for resetting PGE thread
-            
-            std::atomic<bool>       systemActive = false;          // Atomic flag for system active state
-
-            struct sFrameBounds
-            {
-                double x = 0.0;
-                double y = 0.0;
-                double width = 800.0;
-                double height = 600.0;
-            } frameBounds;
-
-            void MacApplicationEventsHandler();
-            void MacWindowEventsHandler();
-            void MacEventsHandler();
-            void MacOpenGLContextEventsHandler();
-            void KeyboardEventHandler(const olc::apis::macos::KeyEvent& event, bool isPressed);
-            bool bNumLockActive = true;         // Num Lock state, we assume it's active at start
-            uint16_t ConvertPGE2WindowStyle();
-            
-            
-        };
-    }
-}
-
 #endif
 
 #if OLC_HOST == OLC_HOST_IOS
@@ -7014,7 +6875,305 @@ namespace olc {
     } // namespace apis
 } // namespace olc
 
+#endif
 
+#if !defined(OLC_USE_WXWIDGETS)
+
+#if OLC_HOST == OLC_HOST_NONE
+
+namespace olc::host
+{
+	class Host_None : public olc::host::Host
+	{
+	public: // OS Window Handling
+		// Make OS Create a window frame, associated with olc::Window
+		bool AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen) override;			
+		// Make OS Close a window frame, associated with olc::Window
+		bool CloseWindowFrame(olc::Window* pWindow) override;
+		// Make OS Update a window frame title, associated with olc::Window
+		bool UpdateWindowFrameTitle(olc::Window* pWindow) override;
+		// Get OS-specific window descriptor(s) for given olc::Window
+		std::vector<void*> GetHostWindowDescriptor(olc::Window* pWindow) override;
+		// Wait for OS desktop refresh (for smooooth vsync)
+		bool SyncWithDesktopComposite() override;
+
+	public: // Platform specific Mouse Control
+		// Force the mouse position in pixels relative to window
+		bool SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos) override;
+		// Show or hide mouse cursor for given window
+		bool SetMouseVisible(olc::Window* pWindow, const bool bVisible) override;
+
+	public: // OS Specific Environment Information
+		virtual olc::KeyboardLayout GetKeyboardLayout() const override;
+
+	public: // Platform Specific OS<->PGE Linkage
+		// Called at very start of application
+		bool OnApplicationStart(olc::PixelGameEngine* pPrimary) override;
+		// Called to start the host - this may mean different things on different hosts
+		// It MUST block until system is requested to exit
+		bool StartSystem() override;
+		// Called to stop the host, and shutdown all resources
+		bool StopSystem() override;
+		// Called at start of system event loop
+		bool OnSystemThreadStart() override;
+		// Called to perform primary window update
+		bool OnSystemTick() override;
+		// Called at end of system event loop
+		bool OnSystemThreadEnd() override;
+		// Called at very end of application
+		bool OnApplicationEnd() override;
+	private:
+		bool systemActive = false;
+	};
+}
+#endif
+
+#if OLC_HOST == OLC_HOST_WINDOWS
+#if defined(UNICODE) || defined(_UNICODE)
+	#define olcT(s) L##s
+#else
+	#define olcT(s) s
+#endif
+
+#define _WINSOCKAPI_
+
+#if !defined(VC_EXTRALEAN)
+#define VC_EXTRALEAN
+#endif
+
+#if !defined(NOMINMAX)
+#define NOMINMAX
+#endif
+
+// In Code::Blocks
+#if !defined(_WIN32_WINNT)
+	#ifdef HAVE_MSMF
+		#define _WIN32_WINNT 0x0600 // Windows Vista
+	#else
+		//#define _WIN32_WINNT 0x0603 // Windows 8.1
+
+		// Windows 10 Minimum
+		#define WINVER 0x0A00
+		#define _WIN32_WINNT 0x0A00
+	#endif
+#endif
+
+// Embrace MSVC superiority
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "gdi32.lib")
+#pragma comment(lib, "Dwmapi.lib")
+
+#include <dwmapi.h>
+#include <windows.h>
+#include <winuser.h>
+#include <windowsx.h>
+#undef _WINSOCKAPI_
+
+namespace olc
+{
+	namespace host
+	{
+		// Host for Windows OS - Single Window Only!
+		class Host_Windows_WinAPI : public olc::host::Host
+		{
+			
+
+		public:
+			Host_Windows_WinAPI();
+			virtual ~Host_Windows_WinAPI() {};
+
+
+		public: // OS Window Handling
+			// Make OS Create a window frame, associated with olc::Window
+			bool AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen) override;
+			// Make OS Close a window frame, associated with olc::Window
+			bool CloseWindowFrame(olc::Window* pWindow) override;
+			// Make OS Update a window frame title, associated with olc::Window
+			bool UpdateWindowFrameTitle(olc::Window* pWindow) override;
+			// Get OS-specific window descriptor(s) for given olc::Window
+			std::vector<void*> GetHostWindowDescriptor(olc::Window* pWindow) override;
+			// Wait for OS desktop refresh (for smooooth vsync)
+			bool SyncWithDesktopComposite() override;
+
+		public: // Platform specific Mouse Control
+			bool SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos) override;
+			bool SetMouseVisible(olc::Window* pWindow, const bool bVisible) override;			
+			bool SetFullScreen(olc::Window* pWindow, const bool bFullScreen) override;
+
+		public: // OS Specific Environment Information
+			olc::KeyboardLayout GetKeyboardLayout() const override;
+
+		public:
+			// Called at very start of application
+			bool OnApplicationStart(olc::PixelGameEngine* pPrimary) override;
+			// Called to start the host - this may mean different things on different hosts
+			bool StartSystem() override;
+			// Called to stop the host, and shutdown all resources
+			bool StopSystem() override;
+			// Called at start of system event loop
+			bool OnSystemThreadStart() override;
+			// Called to perform primary window update
+			bool OnSystemTick() override;
+			// Called at end of system event loop
+			bool OnSystemThreadEnd() override;
+			// Called at very end of application
+			bool OnApplicationEnd() override;
+
+
+
+		private: // Windows OS Specific Things
+			std::unordered_map<size_t, HWND> mapUID2HWND;
+			std::unordered_map<HWND, olc::Window*> mapHWND2PTR;
+			std::wstring ConvertS2W(std::string s);
+			std::atomic<bool> systemActive = false;
+			HCURSOR hCursorDefault = nullptr;
+			HCURSOR hCursorNow = nullptr;
+			DWORD ConvertPGE2WindowStyle(const olc::Window* pWindow);
+
+		public:
+			LRESULT OnWindowEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+			// Map of system keycodes to olc::Keycodes
+			std::unordered_map<int32_t, olc::Key> mapKeys;
+
+		};
+	}
+}
+#endif
+
+#if OLC_HOST == OLC_HOST_MACOS
+
+
+#include <dispatch/dispatch.h>  // Grand Central Dispatch:  Apple's C-based API for managing concurrent operations on macOS and iOS.
+#include <pthread.h>            // POSIX threads: Used for pthread_main_np() to check if current thread is the main thread
+namespace olc
+{
+    namespace host
+    {
+        // Manages our MacOS Host
+        class Host_Apple_MacOS : public olc::host::Host
+        {
+        public:
+            olc::Window* pPGEwindow = nullptr;                  // Pointer to PGE Window
+            
+        public:
+            Host_Apple_MacOS();
+            virtual ~Host_Apple_MacOS() {};
+            
+        public:
+            HostError GetLastError() const { return lastError; }
+
+        public:
+			virtual bool AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen) override;
+			virtual bool CloseWindowFrame(olc::Window* pWindow) override;
+			virtual bool UpdateWindowFrameTitle(olc::Window* pWindow) override;
+
+			virtual std::vector<void*> GetHostWindowDescriptor(olc::Window* pWindow) override;
+
+			// Wait for entire host desktop refresh (for smooooth vsync),
+			virtual bool SyncWithDesktopComposite() override;
+            
+        public: // Platform specific Mouse Control
+            // Force the mouse position in pixels relative to window
+            virtual bool SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos) override;
+            // Show or hide mouse cursor for given window
+            virtual bool SetMouseVisible(olc::Window* pWindow, const bool bVisible) override;
+            // Set a window to fullscreen or not fullscreen
+            virtual bool SetFullScreen(olc::Window* pWindow, const bool bFullScreen) override;
+
+        public: // OS Specific Environment Information
+            virtual olc::KeyboardLayout GetKeyboardLayout() const override;
+
+        public: // Platform Specific OS<->PGE Linkage
+            // Called at very start of application
+            virtual bool OnApplicationStart(olc::PixelGameEngine* pPrimary) override;
+            // Called to start the host - this may mean different things on different hosts
+            // It MUST block until system is requested to exit
+            virtual bool StartSystem() override;
+            // Called to stop the host, and shutdown all resources
+            virtual bool StopSystem() override;
+            // Called at start of system event loop
+            virtual bool OnSystemThreadStart() override;
+            // Called to perform primary window update
+            virtual bool OnSystemTick() override;
+            // Called at end of system event loop
+            virtual bool OnSystemThreadEnd() override;
+            // Called at very end of application
+            virtual bool OnApplicationEnd() override;
+
+        protected:
+			HostError lastError = HostError::None;
+
+        public:
+            // MacOS Application and Window pointers
+            std::unique_ptr<olc::apis::macos::Application> pMacApplication = nullptr;
+            std::unique_ptr<olc::apis::macos::Window> pMacOSWindow = nullptr;
+            std::unique_ptr<olc::apis::macos::EventHandler> pMacOSEventHandler = nullptr;
+            std::shared_ptr<olc::apis::macos::OpenGLRenderer> pMacOSOpenGLRenderer = nullptr;
+
+            void* pMacGLConextObj = nullptr;
+            std::once_flag intialAppFlag;
+            
+            // Map of system keycodes to olc::Keycodes
+            std::unordered_map<int32_t, olc::Key> mapKeys;
+    
+        private:      
+            enum MAINTASKS{
+                NONE,
+                CREATE_OPENGL_RENDERER,
+                RESIZE_WINDOW,
+                BECOME_ACTIVE,
+                RESIGN_ACTIVE,
+                MINIMIZE_WINDOW,
+                DEMINIMIZE_WINDOW
+            };
+            
+            // Internal Mac OS functions
+            bool ExecutePendingMainThreadTasks(void);       // Execute pending tasks on main thread
+            bool MainThreadTasks(void);                     // Handle main thread tasks
+            bool AddPendingMainThreadTask(MAINTASKS task);  // Add a pending task to main thread. Note: You should ever add tasks that require main thread execution only from the PGE thread
+            bool CreateCGLContextObj();                     // Create CGL Context Object
+            std::vector<MAINTASKS> vPendingMainThreadTasks; // Vector of pending main thread tasks
+            
+            std::vector<void*> vMacOSWindowDescriptors; // Vector to hold window descriptors
+            bool enableVSync = false;                   // VSync enabled flag
+            bool bSkipFrame = false;                    // Flag to indicate if frame should be skipped 
+
+            // Thread synchronization for PGE Thread V Main thread
+            mutable std::mutex      mainThreadPendingTasksMutex;    // Mutex for main thread pending tasks
+            std::condition_variable mainThreadResetCondition;       // Condition variable for main thread reset
+            std::atomic<bool>       isMainThreadResetting{false};   // Atomic flag for resetting main thread 
+
+            mutable std::mutex      pgeThreadPendingTasksMutex;    // Mutex for PGE thread pending tasks
+            std::condition_variable pgeThreadResetCondition;       // Condition variable for PGE thread reset
+            std::atomic<bool>       isPGEThreadResetting{true};    // Atomic flag for resetting PGE thread
+            
+            std::atomic<bool>       systemActive = false;          // Atomic flag for system active state
+
+            struct sFrameBounds
+            {
+                double x = 0.0;
+                double y = 0.0;
+                double width = 800.0;
+                double height = 600.0;
+            } frameBounds;
+
+            void MacApplicationEventsHandler();
+            void MacWindowEventsHandler();
+            void MacEventsHandler();
+            void MacOpenGLContextEventsHandler();
+            void KeyboardEventHandler(const olc::apis::macos::KeyEvent& event, bool isPressed);
+            bool bNumLockActive = true;         // Num Lock state, we assume it's active at start
+            uint16_t ConvertPGE2WindowStyle();
+            
+            
+        };
+    }
+}
+
+#endif
+
+#if OLC_HOST == OLC_HOST_IOS
 
 #include <dispatch/dispatch.h>  // Grand Central Dispatch: Apple's C-based API for managing concurrent operations on iOS
 #include <pthread.h>            // POSIX threads: Used for pthread_main_np() to check if current thread is the main thread
@@ -7143,6 +7302,7 @@ namespace olc
 #if OLC_HOST == OLC_HOST_LINUX_X11
 
 #include <GL/gl.h>
+#include <poll.h>
 namespace X11
 {
 #include <X11/X.h>
@@ -7235,6 +7395,7 @@ namespace olc::host
 #include <sys/mman.h>
 #include <unistd.h>
 #include <cstring>
+#include <poll.h>
 
 #include "libdecor.h"
 
@@ -7845,6 +8006,103 @@ namespace olc::host
 }
 #endif
 
+#else
+#include <wx/wx.h>
+#include <wx/glcanvas.h>
+
+// Not really an olc::Host, but some stand alone components that wxWidgets
+// can use and get a PGE3 like rendering and user experience
+namespace olc::wx
+{
+	class PGE3Core : public wxGLCanvas
+	{
+	public:
+		PGE3Core(wxWindow* parent);
+		virtual ~PGE3Core();
+
+		// Create an image resource
+		bool CreateImage(olc::Image& image, const olc::vi2d& size, const ImageConfig& cfg = olc::ImageConfig());
+		// Create an image resource based on an image file asset on disk
+		bool CreateImageFromFile(olc::Image& image, const std::string& sFileName, const ImageConfig& cfg = olc::ImageConfig());
+		// Create an image resource based on an image file asset in memory
+		bool CreateImageFromMemory(olc::Image& image, const uint8_t* data, const size_t bytes, const ImageConfig& cfg = olc::ImageConfig());
+		// Store an image as a file asset on disk
+		bool WriteImageToFile(const olc::Image& image, const std::string& sFileName);
+		// Store an image as a file asset in memory
+		//bool WriteImageToMemory(const olc::Image& image, std::vector<uint8_t> bytes, const std::string& sFileName);
+		// Destroy an image
+		void DestroyImage(olc::Image& image);
+
+	public:
+		wxGLContext* get() const;
+		olc::gpu::Renderer* GetRenderer();
+		olc::imload::ImageLoader* GetImageLoader();
+
+	private: // wxWidgets Specific
+		wxGLContext* m_glContext = nullptr;
+
+	private: // Global PGE3 Components (excluding host)				
+		std::unique_ptr<olc::gpu::Renderer> pRenderer;
+		std::unique_ptr<olc::imload::ImageLoader> pImageLoader;
+	};
+
+	class PGE3Panel : public wxGLCanvas
+	{
+	public:
+		PGE3Panel(wxWindow* parent);
+		PGE3Panel(wxWindow* parent, const olc::vi2d& vFixedSize);
+		virtual ~PGE3Panel();
+
+		void ResetDrawState();
+
+	protected: // Local PGE3 Components
+		olc::Draw draw;
+
+	private:
+		// Same core is loaded across all panels in application
+		static olc::wx::PGE3Core* m_pCore;
+		olc::Image imgPrimary;
+
+		bool bFixedSize = false;
+		olc::vi2d vFixedSizeImage;
+
+		olc::vf2d ScaleMouse(wxMouseEvent& evt);
+
+
+	private: // wxWidgets Overrides
+		void Event_OnPaint(wxPaintEvent& evt);
+		void Event_OnResize(wxSizeEvent& evt);
+		void Event_OnMouseLeftUp(wxMouseEvent& evt);
+		void Event_OnMouseLeftDown(wxMouseEvent& evt);
+		void Event_OnMouseRightUp(wxMouseEvent& evt);
+		void Event_OnMouseRightDown(wxMouseEvent& evt);
+		void Event_OnMouseMiddleUp(wxMouseEvent& evt);
+		void Event_OnMouseMiddleDown(wxMouseEvent& evt);
+		void Event_OnMouseMove(wxMouseEvent& evt);
+		void Event_OnMouseWheel(wxMouseEvent& evt);
+
+
+	protected: // User Overrides
+		virtual void OnRender() {}; // Called via wxWidgets   ->Refresh()
+
+	public:
+		virtual void OnCreate() {};
+		virtual void OnUpdate(const float fElapsedTime) {};
+
+		// Mouse Handlers
+		virtual void OnMouseMiddleUp(const olc::vf2d& vWorldPos, const bool bShift, const bool bControl) {};
+		virtual void OnMouseMiddleDown(const olc::vf2d& vWorldPos, const bool bShift, const bool bControl) {};
+		virtual void OnMouseLeftUp(const olc::vf2d& vWorldPos, const bool bShift, const bool bControl) {};
+		virtual void OnMouseLeftDown(const olc::vf2d& vWorldPos, const bool bShift, const bool bControl) {};
+		virtual void OnMouseRightUp(const olc::vf2d& vWorldPos, const bool bShift, const bool bControl) {};
+		virtual void OnMouseRightDown(const olc::vf2d& vWorldPos, const bool bShift, const bool bControl) {};
+		virtual void OnMouseMove(const olc::vf2d& vWorldPos, const bool bShift, const bool bControl) {};
+		virtual void OnMouseWheel(const olc::vf2d& vWorldPos, const bool bShift, const bool bControl) {};
+	};
+}
+#endif
+
+
 #if OLC_GPU == OLC_GPU_NONE
 
 #if !defined(PGE_RENDERER_NONE_DECLARED)
@@ -7998,6 +8256,11 @@ namespace olc::gpu
     #define GL_LINE 0
     #define GL_FILL 0
     #define OGL_LOAD(t) reinterpret_cast<t##_t*>(eglGetProcAddress(#t))
+#endif
+
+#if OLC_HOST == OLC_HOST_WXWIDGETS
+
+
 #endif
 
 #if !defined(CALLSTYLE)
@@ -8621,1769 +8884,8 @@ namespace olc::imload
 
 
 #if defined(OLC_PGE3_APPLICATION) && !defined(PGE_HOST_IMPLEMENTED)
-#if OLC_HOST == OLC_HOST_NONE
-namespace olc::host
-{
-	// Make OS Create a window frame, associated with olc::Window
-	bool Host_None::AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen)
-	{
-		return true;
-	}
 
-	// Make OS Close a window frame, associated with olc::Window
-	bool Host_None::CloseWindowFrame(olc::Window* pWindow)
-	{
-		return true;
-	}
-
-	// Make OS Update a window frame title, associated with olc::Window
-	bool Host_None::UpdateWindowFrameTitle(olc::Window* pWindow)
-	{
-		return true;
-	}
-
-	// Get OS-specific window descriptor(s) for given olc::Window
-	std::vector<void*> Host_None::GetHostWindowDescriptor(olc::Window* pWindow)
-	{
-		return {};
-	}
-
-	// Wait for OS desktop refresh (for smooooth vsync)
-	bool Host_None::SyncWithDesktopComposite()
-	{
-		return true;
-	}
-
-	// Force the mouse position in pixels relative to window
-	bool Host_None::SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos)
-	{
-		return true;
-	}
-	
-	// Show or hide mouse cursor for given window
-	bool Host_None::SetMouseVisible(olc::Window* pWindow, const bool bVisible)
-	{
-		return true;
-	}
-
-	olc::KeyboardLayout Host_None::GetKeyboardLayout() const
-	{
-		return OLC_DEFAULT_KEYBOARD_LAYOUT;
-	}
-
-	// Called at very start of application
-	bool Host_None::OnApplicationStart(olc::PixelGameEngine* pPrimary)
-	{
-		pPrimaryPGE = pPrimary;
-		return true;
-	}
-
-	// Called to start the host - this may mean different things on different hosts
-	// It MUST block until system is requested to exit
-	bool Host_None::StartSystem()
-	{
-		pPrimaryPGE->OnPreContextStart();
-
-		systemActive = true;
-
-		if(!OnSystemThreadStart())
-			return pPrimaryPGE->OnPostContextEnd();
-		
-		while(systemActive)
-		{
-			if(!OnSystemTick())
-			{
-				StopSystem();
-			}
-		}
-
-		OnSystemThreadEnd();
-
-		return pPrimaryPGE->OnPostContextEnd();
-	}
-
-	// Called to stop the host, and shutdown all resources
-	bool Host_None::StopSystem()
-	{
-		systemActive = false;
-		return true;
-	}
-
-	// Called at start of system event loop
-	bool Host_None::OnSystemThreadStart()
-	{
-		return pPrimaryPGE->OnContextStart();
-	}
-
-	// Called to perform primary window update
-	bool Host_None::OnSystemTick()
-	{
-		return pPrimaryPGE->OnContextTick();
-	}
-	
-	// Called at end of system event loop
-	bool Host_None::OnSystemThreadEnd()
-	{
-		return pPrimaryPGE->OnContextEnd();
-	}
-	
-	// Called at very end of application
-	bool Host_None::OnApplicationEnd()
-	{
-		return true;
-	}
-}
-#endif
-
-#if OLC_HOST == OLC_HOST_WINDOWS
-namespace olc::host
-{
-	bool Host_Windows_WinAPI::OnApplicationStart(olc::PixelGameEngine* pPrimary)
-	{
-		pPrimaryPGE = pPrimary;
-		return true;
-	}
-
-	bool Host_Windows_WinAPI::StartSystem()
-	{
-		// Pre-context start hook
-		pPrimaryPGE->OnPreContextStart();
-
-		// Mark system as active
-		systemActive = true;
-
-		// Create system thread - handles gpu context
-		std::thread threadSystem([this]()
-			{
-				// Notify start of system thread
-				if (!this->OnSystemThreadStart())
-				{
-					// PGE->OnContextStart() failed, or user aborted OnUserCreate()
-					return;
-				}
-
-				// Main system loop
-				while (systemActive)
-				{
-					// Perform primary window update
-					if (!this->OnSystemTick())
-					{
-						StopSystem();
-					}
-				}
-
-				// Notify end of system thread
-				if (!this->OnSystemThreadEnd())
-				{
-					// PGE->OnContextEnd() failed
-					return;
-				}
-			});
-
-		// Blocking event loop on this thread - handles windows
-		MSG msg;
-		while (GetMessage(&msg, NULL, 0, 0) > 0 && systemActive)
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-
-		systemActive = false;
-		if(threadSystem.joinable())
-			threadSystem.join();
-
-		// Post-context end hook
-		return pPrimaryPGE->OnPostContextEnd();
-	}
-
-	bool Host_Windows_WinAPI::StopSystem()
-	{
-		systemActive = false;
-		return true;
-	}
-
-	bool Host_Windows_WinAPI::OnSystemThreadStart()
-	{
-		return pPrimaryPGE->OnContextStart();
-	}
-
-	bool Host_Windows_WinAPI::OnSystemTick()
-	{
-		return pPrimaryPGE->OnContextTick();
-	}
-
-	bool Host_Windows_WinAPI::OnSystemThreadEnd()
-	{
-		return pPrimaryPGE->OnContextEnd();
-	}
-
-	bool Host_Windows_WinAPI::OnApplicationEnd()
-	{
-		return true;
-	}
-
-
-
-	// ALL WINDOWS SPECIFIC GUBBINS BELOW HERE
-
-
-	// Forward Declaration
-	static LRESULT CALLBACK WINAPI_EventHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-
-	// Static linkage to lpfnWndProc - the hWnd is tagged with meta-info to get
-	// access to the actual host instance, which can more conveninetly process
-	// the event across multiple window instances
-	static LRESULT CALLBACK WINAPI_EventHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-	{
-		// CreateWindowEx will fire a WM_CREATE event at the window, which we're
-		// not interested in, and this will occur before we've populated our 
-		// linkage maps. We can detect for this condition here which means
-		// subsequent look-ups dont fail. NOTE: Do not assume WM_CREATE is the
-		// first message that is sent, its just one that we know is reliably sent.
-		if (uMsg == WM_CREATE)
-		{
-			// Associate the window's little blob of user memory with host iface
-			auto cfg = ((CREATESTRUCT*)lParam)->lpCreateParams;
-			SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)cfg);
-		}
-		else
-		{
-			// If this returns a value, then the host iface should be responsible
-			// for handling the message.
-			auto host = (Host_Windows_WinAPI*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-			if (host)
-				return host->OnWindowEvent(hWnd, uMsg, wParam, lParam);
-		}
-		
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	}
-
-	std::wstring Host_Windows_WinAPI::ConvertS2W(std::string s)
-	{
-#ifdef __MINGW32__
-		wchar_t* buffer = new wchar_t[s.length() + 1];
-		mbstowcs(buffer, s.c_str(), s.length());
-		buffer[s.length()] = L'\0';
-#else
-		int count = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, NULL, 0);
-		wchar_t* buffer = new wchar_t[count];
-		MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, buffer, count);
-#endif
-		std::wstring w(buffer);
-		delete[] buffer;
-		return w;
-	}
-
-	Host_Windows_WinAPI::Host_Windows_WinAPI()
-	{
-		// Map Windows Defined VK_ Codes to olc::KeyCodes
-		mapKeys[0x00] = Key::NONE;
-
-		// Windows doesn't define A-Z
-		mapKeys[0x41] = Key::A;
-		mapKeys[0x42] = Key::B;
-		mapKeys[0x43] = Key::C;
-		mapKeys[0x44] = Key::D;
-		mapKeys[0x45] = Key::E;
-		mapKeys[0x46] = Key::F;
-		mapKeys[0x47] = Key::G;
-		mapKeys[0x48] = Key::H;
-		mapKeys[0x49] = Key::I;
-		mapKeys[0x4A] = Key::J;
-		mapKeys[0x4B] = Key::K;
-		mapKeys[0x4C] = Key::L;
-		mapKeys[0x4D] = Key::M;
-		mapKeys[0x4E] = Key::N;
-		mapKeys[0x4F] = Key::O;
-		mapKeys[0x50] = Key::P;
-		mapKeys[0x51] = Key::Q;
-		mapKeys[0x52] = Key::R;
-		mapKeys[0x53] = Key::S;
-		mapKeys[0x54] = Key::T;
-		mapKeys[0x55] = Key::U;
-		mapKeys[0x56] = Key::V;
-		mapKeys[0x57] = Key::W;
-		mapKeys[0x58] = Key::X;
-		mapKeys[0x59] = Key::Y;
-		mapKeys[0x5A] = Key::Z;
-
-		// Windows doesnt define numeric keys
-		mapKeys[0x30] = Key::K0;
-		mapKeys[0x31] = Key::K1;
-		mapKeys[0x32] = Key::K2;
-		mapKeys[0x33] = Key::K3;
-		mapKeys[0x34] = Key::K4;
-		mapKeys[0x35] = Key::K5;
-		mapKeys[0x36] = Key::K6;
-		mapKeys[0x37] = Key::K7;
-		mapKeys[0x38] = Key::K8;
-		mapKeys[0x39] = Key::K9;
-
-		// Function Keys
-		mapKeys[VK_F1] = Key::F1;
-		mapKeys[VK_F2] = Key::F2;
-		mapKeys[VK_F3] = Key::F3;
-		mapKeys[VK_F4] = Key::F4;
-		mapKeys[VK_F5] = Key::F5;
-		mapKeys[VK_F6] = Key::F6;
-		mapKeys[VK_F7] = Key::F7;
-		mapKeys[VK_F8] = Key::F8;
-		mapKeys[VK_F9] = Key::F9;
-		mapKeys[VK_F10] = Key::F10;
-		mapKeys[VK_F11] = Key::F11;
-		mapKeys[VK_F12] = Key::F12;
-
-		// Arrow Keys
-		mapKeys[VK_DOWN] = Key::DOWN;
-		mapKeys[VK_LEFT] = Key::LEFT;
-		mapKeys[VK_RIGHT] = Key::RIGHT;
-		mapKeys[VK_UP] = Key::UP;
-
-		// Other Keys
-		mapKeys[VK_BACK] = Key::BACK;
-		mapKeys[VK_ESCAPE] = Key::ESCAPE;
-		mapKeys[VK_RETURN] = Key::ENTER;
-		mapKeys[VK_PAUSE] = Key::PAUSE;
-		mapKeys[VK_SCROLL] = Key::SCROLL;
-		mapKeys[VK_TAB] = Key::TAB;
-		mapKeys[VK_DELETE] = Key::DEL;
-		mapKeys[VK_HOME] = Key::HOME;
-		mapKeys[VK_END] = Key::END;
-		mapKeys[VK_PRIOR] = Key::PGUP;
-		mapKeys[VK_NEXT] = Key::PGDN;
-		mapKeys[VK_INSERT] = Key::INS;
-		mapKeys[VK_SHIFT] = Key::SHIFT;
-		mapKeys[VK_CONTROL] = Key::CTRL;
-		mapKeys[VK_SPACE] = Key::SPACE;
-		mapKeys[VK_CAPITAL] = Key::CAPS_LOCK;
-		mapKeys[VK_MENU] = Key::ALT;
-
-		// Numpad
-		mapKeys[VK_NUMPAD0] = Key::NP0;
-		mapKeys[VK_NUMPAD1] = Key::NP1;
-		mapKeys[VK_NUMPAD2] = Key::NP2;
-		mapKeys[VK_NUMPAD3] = Key::NP3;
-		mapKeys[VK_NUMPAD4] = Key::NP4;
-		mapKeys[VK_NUMPAD5] = Key::NP5;
-		mapKeys[VK_NUMPAD6] = Key::NP6;
-		mapKeys[VK_NUMPAD7] = Key::NP7;
-		mapKeys[VK_NUMPAD8] = Key::NP8;
-		mapKeys[VK_NUMPAD9] = Key::NP9;
-		mapKeys[VK_MULTIPLY] = Key::NP_MUL;
-		mapKeys[VK_ADD] = Key::NP_ADD;
-		mapKeys[VK_DIVIDE] = Key::NP_DIV;
-		mapKeys[VK_SUBTRACT] = Key::NP_SUB;
-		mapKeys[VK_DECIMAL] = Key::NP_DECIMAL;
-
-		// OEM Keys
-		mapKeys[VK_OEM_1] = Key::OEM_1;			// On US and UK keyboards this is the ';:' key
-		mapKeys[VK_OEM_2] = Key::OEM_2;			// On US and UK keyboards this is the '/?' key
-		mapKeys[VK_OEM_3] = Key::OEM_3;			// On US keyboard this is the '~' key
-		mapKeys[VK_OEM_4] = Key::OEM_4;			// On US and UK keyboards this is the '[{' key
-		mapKeys[VK_OEM_5] = Key::OEM_5;			// On US keyboard this is '\|' key.
-		mapKeys[VK_OEM_6] = Key::OEM_6;			// On US and UK keyboards this is the ']}' key
-		mapKeys[VK_OEM_7] = Key::OEM_7;			// On US keyboard this is the single/double quote key. On UK, this is the single quote/@ symbol key
-		mapKeys[VK_OEM_8] = Key::OEM_8;			// miscellaneous characters. Varies by keyboard
-		mapKeys[VK_OEM_PLUS] = Key::EQUALS;		// the '+' key on any keyboard
-		mapKeys[VK_OEM_COMMA] = Key::COMMA;		// the comma key on any keyboard
-		mapKeys[VK_OEM_MINUS] = Key::MINUS;		// the minus key on any keyboard
-		mapKeys[VK_OEM_PERIOD] = Key::PERIOD;	// the period key on any keyboard
-	}
-
-	bool Host_Windows_WinAPI::AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen)
-	{
-		olc_IgnoreUnused(bFullScreen);
-
-		// The user created olc::Window object is the SSoT for what a window
-		// should look like, so get that sort of thing from there
-		olc::vi2d vWinPos = vWindowPos;
-		olc::vi2d vWinSize = vWindowSize;
-		
-		hCursorNow = hCursorDefault = LoadCursor(NULL, IDC_ARROW);
-
-		// Define WindowClass
-		WNDCLASSEX wc = { 0 };		
-		wc.cbSize = sizeof(WNDCLASSEX);
-		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-		wc.hCursor = hCursorDefault;
-		wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wc.hInstance = GetModuleHandle(nullptr);
-		wc.lpfnWndProc = WINAPI_EventHandler;
-		wc.cbClsExtra = 0;
-		wc.cbWndExtra = 0;// sizeof(this); // For static meta-info
-		wc.lpszMenuName = nullptr;
-		wc.hbrBackground = nullptr;
-		wc.lpszClassName = olcT("OLC_PIXEL_GAME_ENGINE3");
-		RegisterClassEx(&wc);
-
-		// Define window furniture
-		DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-		DWORD dwStyle = ConvertPGE2WindowStyle(pWindow);
-
-		olc::vi2d vTopLeft = vWindowPos;
-
-		if (bFullScreen || pPrimaryPGE->config.bFullScreen)
-		{
-			dwExStyle = 0;
-			dwStyle = WS_VISIBLE | WS_POPUP;
-			POINT olc_pt = { vWinPos.x, vWinPos.y };
-			HMONITOR hmon = MonitorFromPoint(olc_pt, MONITOR_DEFAULTTONEAREST);
-			MONITORINFO mi = { sizeof(mi) };
-			if (!GetMonitorInfo(hmon, &mi)) return false;
-			vWinSize = { mi.rcMonitor.right, mi.rcMonitor.bottom };
-			vTopLeft.x = 0;
-			vTopLeft.y = 0;
-		}
-
-
-		// Keep client size as requested
-		RECT rWndRect = { 0, 0, vWinSize.x, vWinSize.y };
-		AdjustWindowRectEx(&rWndRect, dwStyle, FALSE, dwExStyle);
-		int width = rWndRect.right - rWndRect.left;
-		int height = rWndRect.bottom - rWndRect.top;
-
-		// Create the actual OS window, return a handle
-		HWND hWnd = CreateWindowEx(dwExStyle, olcT("OLC_PIXEL_GAME_ENGINE3"), olcT(""), dwStyle,
-			vTopLeft.x, vTopLeft.y, width, height, NULL, NULL, GetModuleHandle(nullptr), this);
-
-		// Update window size to match actual client area given. In situations where the window
-		// is clamped to the desktop, the client area may be smaller than requested.
-		RECT rClient;
-		GetClientRect(hWnd, &rClient);
-		pWindow->SetWindowSize({ rClient.right - rClient.left, rClient.bottom - rClient.top });
-
-		// Hide the close button if the user requested it, but only after styles are applied,
-		if (!pPrimaryPGE->config.bShowWindowCloseButton)
-		{
-			HMENU hMenu = GetSystemMenu(hWnd, FALSE);
-			DeleteMenu(hMenu, SC_CLOSE, MF_BYCOMMAND);
-		}
-
-		LONG_PTR lp = GetWindowLongPtr(hWnd, GWL_STYLE);
-		SetWindowLongPtr(hWnd, GWL_STYLE, lp | (dwStyle));
-		lp = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
-		SetWindowLongPtr(hWnd, GWL_EXSTYLE, lp | (WS_EX_WINDOWEDGE));
-
-		pWindow->olc_OnFocus(true);
-
-		//SetWindowPos(hWnd, NULL, vWinPos.x, vWinPos.y, width, height, SWP_SHOWWINDOW);
-		//ShowWindow(hWnd, 1);
-		//UpdateWindow(hWnd);
-
-		// Now... awkwardly, the above has already fired off some window messages
-		// and they arent necessarily in a consistent order. Whereas one might 
-		// assume WM_CREATE would be the first, there are some others on more
-		// modern systems. This is awkward because we havent yet associated the
-		// source window with a long_ptr to this class, and therefore we can't
-		// call the appropriate event handler.
-
-		// Store the link bewteen host resource and window
-		mapUID2HWND.insert_or_assign(pWindow->GetUID(), hWnd);
-		mapHWND2PTR.insert_or_assign(hWnd, pWindow);
-
-	
-
-
-		//DragAcceptFiles(olc_hWnd, true);
-
-		return true;
-	}
-
-	bool Host_Windows_WinAPI::CloseWindowFrame(olc::Window* pWindow)
-	{
-		DestroyWindow((HWND)GetHostWindowDescriptor(pWindow).front());
-		return false;
-	}
-
-	bool Host_Windows_WinAPI::UpdateWindowFrameTitle(olc::Window* pWindow)
-	{
-#ifdef UNICODE
-		SetWindowText(mapUID2HWND.at(pWindow->GetUID()), ConvertS2W(pWindow->GetWindowTitle()).c_str());
-#else
-		SetWindowText(mapUID2HWND.at(pWindow->GetUID()), pWindow->GetWindowTitle().c_str());
-#endif
-		return true;
-	}
-
-	std::vector<void*> Host_Windows_WinAPI::GetHostWindowDescriptor(olc::Window* pWindow)
-	{
-		return { mapUID2HWND[pWindow->GetUID()] };
-	}
-
-	bool Host_Windows_WinAPI::SyncWithDesktopComposite()
-	{
-		return DwmFlush() == S_OK;
-	}
-
-	bool Host_Windows_WinAPI::SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos)
-	{
-		POINT pt;
-		pt.x = vPos.x;
-		pt.y = vPos.y;
-		ClientToScreen(mapUID2HWND.at(pWindow->GetUID()), &pt);
-		SetCursorPos(pt.x, pt.y);
-		return true;
-	}
-
-	bool Host_Windows_WinAPI::SetMouseVisible(olc::Window* pWindow, const bool bVisible)
-	{
-		olc_IgnoreUnused(pWindow);
-
-		hCursorNow = bVisible ? hCursorDefault : NULL;
-
-		// Fire fake move event to update cursor visibility immediately
-		POINT p;
-		GetCursorPos(&p);
-		SetCursorPos(p.x, p.y + 1);
-		SetCursorPos(p.x, p.y);
-		return true;
-	}
-
-	bool Host_Windows_WinAPI::SetFullScreen(olc::Window* pWindow, const bool bFullScreen)
-	{
-		HWND hWnd = mapUID2HWND.at(pWindow->GetUID());
-
-		if (bFullScreen)
-		{
-			// Maximise, make on top, remove border and titlebar
-			SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
-			SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-			ShowWindow(hWnd, SW_MAXIMIZE);
-		}
-		else
-		{
-			// Restore original window style and position
-			DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-			// Get the style we should have based on the window config
-			DWORD dwStyle = ConvertPGE2WindowStyle(pWindow);
-
-			LONG_PTR lp = GetWindowLongPtr(hWnd, GWL_STYLE);
-			SetWindowLongPtr(hWnd, GWL_STYLE, lp | dwStyle);
-			lp = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
-			SetWindowLongPtr(hWnd, GWL_EXSTYLE, lp | dwExStyle);
-			ShowWindow(hWnd, SW_NORMAL);
-		}
-
-		UpdateWindow(hWnd);
-		SetForegroundWindow(hWnd);
-		SetFocus(hWnd);
-		SetActiveWindow(hWnd);
-		return true;
-	}
-
-	DWORD Host_Windows_WinAPI::ConvertPGE2WindowStyle(const olc::Window* pWindow)
-	{
-		olc_IgnoreUnused(pWindow);
-
-		DWORD dwStyle = WS_OVERLAPPED | WS_VISIBLE; // Default style for CreateWindowEx
-
-		// Note for Microsoft: if you hide the border, it hides the title bar too, and via versa
-
-		// For fullscreen,borderless/noTitlebar we want to skip all the window furniture and just have a big ol canvas
-		if (!pPrimaryPGE->config.bShowWindowBorder || !pPrimaryPGE->config.bShowWindowTilebar) return dwStyle |= WS_POPUP;
-
-		// If any max/min/close button(s) display the button menu
-		if (pPrimaryPGE->config.bShowWindowCloseButton || pPrimaryPGE->config.bShowWindowMaximiseButton || pPrimaryPGE->config.bShowWindowMinimiseButton) dwStyle |= WS_SYSMENU;
-		if (pPrimaryPGE->config.bShowWindowTilebar)			dwStyle |= WS_CAPTION;		// Add a title bar
-		if (pPrimaryPGE->config.bShowWindowBorder)			dwStyle |= WS_BORDER;		// Add a border
-		if (pPrimaryPGE->config.bResizeable)				dwStyle |= WS_THICKFRAME;	// Enable resizing
-		if (pPrimaryPGE->config.bShowWindowMinimiseButton)	dwStyle |= WS_MINIMIZEBOX;	// Add Min Button
-		if (pPrimaryPGE->config.bShowWindowMaximiseButton)	dwStyle |= WS_MAXIMIZEBOX;	// Add Max Button
-
-		// Note: Close button is handled after dwStlyes are applied
-
-		return dwStyle;
-
-
-	}
-		
-	LRESULT Host_Windows_WinAPI::OnWindowEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-	{
-		if (!mapHWND2PTR.contains(hWnd))
-			return DefWindowProc(hWnd, uMsg, wParam, lParam);;
-
-		// Get target olc::Window
-		const auto& window = mapHWND2PTR.at(hWnd);
-
-		// Many WinAPI events are literally ancient these days, so need some interpretation
-		// to get to the useful data.
-
-		switch (uMsg)
-		{
-		case WM_MOUSEMOVE: // Mouse has moved within a window
-			{
-				// Extract mouse X & Y
-				uint16_t x = uint16_t(lParam & 0xFFFF); 
-				uint16_t y = uint16_t((lParam >> 16) & 0xFFFF);
-				int16_t ix = *(int16_t*)&x;   
-				int16_t iy = *(int16_t*)&y;
-				// Tell window new mouse location
-				window->olc_OnMouseMove(olc::vi2d{ ix, iy });
-				break;
-			}
-		
-
-			//		case WM_MOVE:       vWinPos = olc::vi2d(lParam & 0xFFFF, (lParam >> 16) & 0xFFFF);  ptrPGE->olc_UpdateWindowPos(lParam & 0xFFFF, (lParam >> 16) & 0xFFFF);	return 0;
-		case WM_SIZE:
-			{				
-				window->olc_OnWindowSize(olc::vi2d(lParam & 0xFFFF, (lParam >> 16) & 0xFFFF));
-				break;
-			}
-
-		case WM_MOUSEWHEEL:
-			{
-				window->olc_OnMouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
-				break;
-			}
-
-		case WM_ACTIVATE:
-			{
-				window->olc_OnFocus((LOWORD(wParam) != WA_INACTIVE));
-				return 0;
-			}
-
-    	case WM_MOUSEACTIVATE:
-			{
-				window->olc_OnFocus(true);
-				return MA_ACTIVATE;
-			}
-        
-		case WM_SETFOCUS:
-			{
-				window->olc_OnFocus(true);
-				return 0;
-			}
-
-		case WM_KILLFOCUS:
-			{
-				window->olc_OnFocus(false);
-				return 0;
-			}
-
-		case WM_KEYDOWN:
-			{
-				window->olc_OnFocus(true);
-				if (mapKeys.contains(int32_t(wParam)))
-				{
-					window->olc_OnKeyPress(mapKeys[int32_t(wParam)], true);
-				}
-				break;
-			}
-
-		case WM_KEYUP:
-			{
-				if (mapKeys.contains(int32_t(wParam)))
-				{
-					window->olc_OnKeyPress(mapKeys[int32_t(wParam)], false);
-				}
-				break;
-			}
-
-		case WM_SYSKEYDOWN:
-		{
-			if (mapKeys.contains(int32_t(wParam)))
-			{
-				window->olc_OnKeyPress(mapKeys[int32_t(wParam)], true);
-			}
-			break;
-		}
-
-		case WM_SYSKEYUP:
-		{
-			if (mapKeys.contains(int32_t(wParam)))
-			{
-				window->olc_OnKeyPress(mapKeys[int32_t(wParam)], false);
-			}
-			break;
-		}
-
-		case WM_LBUTTONDOWN:
-			{
-				window->olc_OnMouseButton(0, true);
-				break;
-			}
-		case WM_LBUTTONUP:
-			{
-				window->olc_OnMouseButton(0, false);
-				break;
-			}
-		case WM_RBUTTONDOWN:
-			{
-				window->olc_OnMouseButton(1, true);
-				break;
-			}
-		case WM_RBUTTONUP:
-			{
-				window->olc_OnMouseButton(1, false);
-				break;
-			}
-		case WM_MBUTTONDOWN:
-			{
-				window->olc_OnMouseButton(2, true);
-				break;
-			}
-		case WM_MBUTTONUP:
-			{
-				window->olc_OnMouseButton(2, false);
-				break;
-			}
-		case WM_XBUTTONDOWN:
-			{
-				UINT button = GET_XBUTTON_WPARAM(wParam);
-				if(button == XBUTTON1)
-				{
-					window->olc_OnMouseButton(3, true);
-				}
-				else if(button == XBUTTON2)
-				{
-					window->olc_OnMouseButton(4, true);
-				}
-				
-				break;
-			}
-		case WM_XBUTTONUP:
-			{
-				UINT button = GET_XBUTTON_WPARAM(wParam);
-				if(button == XBUTTON1)
-				{
-					window->olc_OnMouseButton(3, false);
-				}
-				else if(button == XBUTTON2)
-				{
-					window->olc_OnMouseButton(4, false);
-				}
-				
-				break;
-			}
-
-		case WM_POINTERDOWN:
-			{
-				POINTER_INPUT_TYPE pointerType;
-				if (GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerType))
-				{
-					if (pointerType == PT_TOUCH)
-					{
-						POINTER_TOUCH_INFO touchInfo;
-						if (GetPointerTouchInfo(GET_POINTERID_WPARAM(wParam), &touchInfo))
-						{
-							POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-							ScreenToClient(hWnd, &pt);
-							window->olc_OnTouch(
-								GET_POINTERID_WPARAM(wParam),
-								olc::vf2d{ float(pt.x), float(pt.y) },
-								true,
-								false,
-								olc::vf2d{ float(touchInfo.rcContact.right - touchInfo.rcContact.left), float(touchInfo.rcContact.bottom - touchInfo.rcContact.top) });
-						}
-					}
-					else if (pointerType == PT_PEN)
-					{
-						POINTER_PEN_INFO penInfo;
-						if (GetPointerPenInfo(GET_POINTERID_WPARAM(wParam), &penInfo))
-						{
-							POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-							ScreenToClient(hWnd, &pt);
-							window->olc_OnTouch(
-								GET_POINTERID_WPARAM(wParam),
-								olc::vf2d{ float(pt.x), float(pt.y) },
-								true,
-								false,
-								{ 1,1 },
-								true,
-								float(penInfo.pressure) / 1024.0f,
-								float(penInfo.rotation) / 360.0f * 2.0f * 3.14159265f,
-								{ float(penInfo.tiltX) , float(penInfo.tiltY) }
-							);
-						}
-					}
-					
-				}
-
-				break;
-			}
-
-		case WM_POINTERUP:
-		{
-			POINTER_INPUT_TYPE pointerType;
-			if (GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerType))
-			{
-				if (pointerType == PT_TOUCH)
-				{
-					POINTER_TOUCH_INFO touchInfo;
-					if (GetPointerTouchInfo(GET_POINTERID_WPARAM(wParam), &touchInfo))
-					{
-						POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-						ScreenToClient(hWnd, &pt);
-						window->olc_OnTouch(
-							GET_POINTERID_WPARAM(wParam),
-							olc::vf2d{ float(pt.x), float(pt.y) },
-							false,
-							true,
-							olc::vf2d{ float(touchInfo.rcContact.right - touchInfo.rcContact.left), float(touchInfo.rcContact.bottom - touchInfo.rcContact.top) });
-					}
-				}
-				else if (pointerType == PT_PEN)
-				{
-					POINTER_PEN_INFO penInfo;
-					if (GetPointerPenInfo(GET_POINTERID_WPARAM(wParam), &penInfo))
-					{
-						POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-						ScreenToClient(hWnd, &pt);
-						window->olc_OnTouch(
-							GET_POINTERID_WPARAM(wParam),
-							olc::vf2d{ float(pt.x), float(pt.y) },
-							false,
-							true,
-							{ 1,1 },
-							true,
-							float(penInfo.pressure) / 1024.0f,
-							float(penInfo.rotation) / 360.0f * 2.0f * 3.14159265f,
-							{ float(penInfo.tiltX) , float(penInfo.tiltY) }
-						);
-					}
-				}
-			}
-
-			break;
-		}
-
-		case WM_POINTERUPDATE:
-		{
-			POINTER_INPUT_TYPE pointerType;
-			if (GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerType))
-			{
-				if (pointerType == PT_TOUCH)
-				{
-					POINTER_TOUCH_INFO touchInfo;
-					if (GetPointerTouchInfo(GET_POINTERID_WPARAM(wParam), &touchInfo))
-					{
-						POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-						ScreenToClient(hWnd, &pt);
-						window->olc_OnTouch(
-							GET_POINTERID_WPARAM(wParam),
-							olc::vf2d{ float(pt.x), float(pt.y) },
-							false,
-							false,
-							olc::vf2d{ float(touchInfo.rcContact.right - touchInfo.rcContact.left), float(touchInfo.rcContact.bottom - touchInfo.rcContact.top) });
-					}
-				}
-				else if (pointerType == PT_PEN)
-				{
-					if (IS_POINTER_INCONTACT_WPARAM(wParam))
-					{
-						POINTER_PEN_INFO penInfo;
-						if (GetPointerPenInfo(GET_POINTERID_WPARAM(wParam), &penInfo))
-						{
-							POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-							ScreenToClient(hWnd, &pt);
-							window->olc_OnTouch(
-								GET_POINTERID_WPARAM(wParam),
-								olc::vf2d{ float(pt.x), float(pt.y) },
-								false,
-								false,
-								{ 1,1 },
-								true,
-								float(penInfo.pressure) / 1024.0f,
-								float(penInfo.rotation) / 360.0f * 2.0f * 3.14159265f,
-								{ float(penInfo.tiltX) , float(penInfo.tiltY) }
-							);
-						}
-					}
-				}
-			}	
-			break;
-		}
-
-
-			//		case WM_DROPFILES:
-			//		{
-			//			// This is all eww...
-			//			HDROP drop = (HDROP)wParam;
-			//			
-			//			uint32_t nFiles = DragQueryFile(drop, 0xFFFFFFFF, nullptr, 0);
-			//			std::vector<std::string> vFiles;
-			//			for (uint32_t i = 0; i < nFiles; i++)
-			//			{
-			//				TCHAR dfbuffer[256]{};
-			//				uint32_t len = DragQueryFile(drop, i, nullptr, 0);
-			//				DragQueryFile(drop, i, dfbuffer, 256);
-			//#ifdef UNICODE
-			//#ifdef __MINGW32__
-			//				char* buffer = new char[len + 1];
-			//				wcstombs(buffer, dfbuffer, len);
-			//				buffer[len] = '\0';
-			//#else
-			//				int count = WideCharToMultiByte(CP_UTF8, 0, dfbuffer, -1, NULL, 0, NULL, NULL);
-			//				char* buffer = new char[count];
-			//				WideCharToMultiByte(CP_UTF8, 0, dfbuffer, -1, buffer, count, NULL, NULL);
-			//#endif				
-			//				vFiles.push_back(std::string(buffer));
-			//				delete[] buffer;
-			//#else
-			//				vFiles.push_back(std::string(dfbuffer));
-			//#endif
-			//			}
-			//			
-			//			// Even more eww...
-			//			POINT p; DragQueryPoint(drop, &p);
-			//			ptrPGE->olc_DropFiles(p.x, p.y, vFiles);
-			//			DragFinish(drop);
-			//			return 0;
-			//		}
-			//		break;
-			//			
-			//			
-		case WM_CLOSE:
-			{
-				window->olc_OnWindowClose();
-				break;
-				//return DefWindowProc(hWnd, uMsg, wParam, lParam);
-			}
-
-			case WM_SETCURSOR:
-			{
-				if (LOWORD(lParam) == HTCLIENT)
-				{
-					SetCursor(hCursorNow);
-					return TRUE; // Sigh ffs microsoft...
-				}
-
-				break;
-			}
-
-		case WM_DESTROY:	
-			PostQuitMessage(0); 
-			DestroyWindow(hWnd);
-
-		}
-
-
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	}
-
-	olc::KeyboardLayout Host_Windows_WinAPI::GetKeyboardLayout() const
-	{
-		HKL kbl = ::GetKeyboardLayout(0);
-		size_t highWord = ((size_t)kbl >> 16) & 0xFFFF;
-
-		if (highWord == 0x00000409) // US
-			return olc::KeyboardLayout::QWERTY_US;
-		else if(highWord == 0x00000809) // UK
-			return olc::KeyboardLayout::QWERTY_UK;
-		else if(highWord == 0x00000407) // DE
-			return olc::KeyboardLayout::QWERTZ;
-		else if(highWord == 0x0000040C) // FR
-			return olc::KeyboardLayout::AZERTY;
-
-		return OLC_DEFAULT_KEYBOARD_LAYOUT;
-	}
-
-};
-#endif
 #if OLC_HOST == OLC_HOST_MACOS
-namespace olc::host {
-
-
-    // NSEventModifierFlags values
-    // constexpr unsigned int NSEventModifierNoFlags        = 1 << 8;  // 0x100     // Temp remove unused variable warning
-    // constexpr unsigned int NSEventModifierFlagCapsLock   = 1 << 16; // 0x10000   // Temp remove unused variable warning
-    constexpr unsigned int NSEventModifierFlagShift      = 1 << 17; // 0x20000
-    constexpr unsigned int NSEventModifierFlagControl    = 1 << 18; // 0x40000
-    // constexpr unsigned int NSEventModifierFlagOption     = 1 << 19; // 0x80000   // Temp remove unused variable warning
-    constexpr unsigned int NSEventModifierFlagCommand    = 1 << 20; // 0x100000
-    // constexpr unsigned int NSEventModifierFlagNumericPad = 1 << 21; // 0x200000  // Temp remove unused variable warning
-    // constexpr unsigned int NSEventModifierFlagHelp       = 1 << 22; // 0x400000  // Temp remove unused variable warning
-    // constexpr unsigned int NSEventModifierFlagFunction   = 1 << 23; // 0x800000  // Temp remove unused variable warning
-
-    // enum for window appearance and behavior bit flags
-    enum class NSWindowStyleMask : uint16_t {
-        Titled                   = (1 << 0),     // Window has a title bar
-        Closable                 = (1 << 1),     // Window can be closed
-        Miniaturizable           = (1 << 2),     // Window can be minimized
-        Resizable                = (1 << 3),     // Window can be resized
-        UtilityWindow            = (1 << 4),     // Utility window style
-        DocModalWindow           = (1 << 6),     // Document-modal window
-        NonactivatingPanel       = (1 << 7),     // Non-activating panel
-        TexturedBackground       = (1 << 8),     // Textured background
-        HUDWindow                = (1 << 13),    // Heads-up display window
-        UnifiedTitleAndToolbar   = (1 << 12),    // Unified title and toolbar
-        FullScreen               = (1 << 14),    // Full-screen window
-        FullSizeContentView      = (1 << 15)     // Full-size content view
-    };
-
-
-    Host_Apple_MacOS::Host_Apple_MacOS()
-    {
-         // Reference: https://eastmanreference.com/complete-list-of-applescript-key-codes
-        mapKeys[0x00] = Key::NONE;
-
-        // Map macOS key codes to olc::Key codes
-        mapKeys[0] = Key::A;
-        mapKeys[11] = Key::B;
-        mapKeys[8] = Key::C;
-        mapKeys[2] = Key::D;
-        mapKeys[14] = Key::E;
-        mapKeys[3] = Key::F;
-        mapKeys[5] = Key::G;
-        mapKeys[4] = Key::H;
-        mapKeys[34] = Key::I;
-        mapKeys[38] = Key::J;
-        mapKeys[40] = Key::K;
-        mapKeys[37] = Key::L;
-        mapKeys[46] = Key::M;
-        mapKeys[45] = Key::N;
-        mapKeys[31] = Key::O;
-        mapKeys[35] = Key::P;
-        mapKeys[12] = Key::Q;
-        mapKeys[15] = Key::R;
-        mapKeys[1] = Key::S;
-        mapKeys[17] = Key::T;
-        mapKeys[32] = Key::U;
-        mapKeys[9] = Key::V;
-        mapKeys[13] = Key::W;
-        mapKeys[7] = Key::X;
-        mapKeys[16] = Key::Y;
-        mapKeys[6] = Key::Z;
-
-        // Numeric keys
-        mapKeys[29] = Key::K0;
-        mapKeys[18] = Key::K1;
-        mapKeys[19] = Key::K2;
-        mapKeys[20] = Key::K3;
-        mapKeys[21] = Key::K4;
-        mapKeys[23] = Key::K5;
-        mapKeys[22] = Key::K6;
-        mapKeys[26] = Key::K7;
-        mapKeys[28] = Key::K8;
-        mapKeys[25] = Key::K9;
-
-        // Function Keys
-        mapKeys[122] = Key::F1;
-        mapKeys[120] = Key::F2;
-        mapKeys[99] = Key::F3;
-        mapKeys[118] = Key::F4;
-        mapKeys[96] = Key::F5;
-        mapKeys[97] = Key::F6;
-        mapKeys[98] = Key::F7;
-        mapKeys[100] = Key::F8;
-        mapKeys[101] = Key::F9;
-        mapKeys[109] = Key::F10;
-        mapKeys[103] = Key::F11;
-        mapKeys[111] = Key::F12;
-
-        // Arrow Keys
-        mapKeys[125] = Key::DOWN; 
-        mapKeys[123] = Key::LEFT;
-        mapKeys[124] = Key::RIGHT;
-        mapKeys[126] = Key::UP;
-
-        // Other Keys
-        mapKeys[51] = Key::BACK;        // Delete (Backspace)
-        mapKeys[53] = Key::ESCAPE;      // Escape
-        mapKeys[36] = Key::ENTER;       // Return
-        mapKeys[113] = Key::PAUSE;      // F16 (often used as pause)
-        mapKeys[107] = Key::SCROLL;     // F14 (scroll lock equivalent)
-        mapKeys[48] = Key::TAB;         // Tab
-        mapKeys[117] = Key::DEL;        // Forward Delete
-        mapKeys[115] = Key::HOME;       // Home
-        mapKeys[119] = Key::END;        // End
-        mapKeys[116] = Key::PGUP;       // Page Up
-        mapKeys[121] = Key::PGDN;       // Page Down
-        mapKeys[114] = Key::INS;        // Help (Insert equivalent)
-        mapKeys[56] = Key::SHIFT;       // Left Shift
-        mapKeys[59] = Key::CTRL;        // Left Control
-        mapKeys[49] = Key::SPACE;       // Space
-        mapKeys[57] = Key::CAPS_LOCK;   // Caps Lock
-
-        // Numpad
-        mapKeys[82] = Key::NP0;
-        mapKeys[83] = Key::NP1;
-        mapKeys[84] = Key::NP2;
-        mapKeys[85] = Key::NP3;
-        mapKeys[86] = Key::NP4;
-        mapKeys[87] = Key::NP5;
-        mapKeys[88] = Key::NP6;
-        mapKeys[89] = Key::NP7;
-        mapKeys[91] = Key::NP8;
-        mapKeys[92] = Key::NP9;
-        mapKeys[67] = Key::NP_MUL;      // Numpad *
-        mapKeys[69] = Key::NP_ADD;      // Numpad +
-        mapKeys[75] = Key::NP_DIV;      // Numpad /
-        mapKeys[78] = Key::NP_SUB;      // Numpad -
-        mapKeys[65] = Key::NP_DECIMAL;  // Numpad .
-
-        // Symbol Keys (OEM equivalents)
-        mapKeys[41] = Key::OEM_1;       // On US and UK keyboards this is the ';:' key
-        mapKeys[44] = Key::OEM_2;       // On US and UK keyboards this is the '/?' key
-        mapKeys[50] = Key::OEM_3;       // On US and UK keyboards this is the '`~' key (Grave accent `)
-        mapKeys[33] = Key::OEM_4;       // On US and UK keyboards this is the '[{' key
-        mapKeys[42] = Key::OEM_5;       // On US keyboard this is '\|' key. 
-        mapKeys[30] = Key::OEM_6;       // On US and UK keyboards this is the ']}' key
-        mapKeys[39] = Key::OEM_7;       // On US keyboard this is the single/double quote key. On UK, this is the single quote/@ symbol key
-        mapKeys[10] = Key::OEM_8;       // Section sign § (varies by keyboard)
-        mapKeys[24] = Key::EQUALS;      // Equal sign =
-        mapKeys[43] = Key::COMMA;       // Comma ,
-        mapKeys[27] = Key::MINUS;       // Minus -
-        mapKeys[47] = Key::PERIOD;      // Period .
-
-    }
-
-
-    bool Host_Apple_MacOS::AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen){
-        olc_IgnoreUnused(bFullScreen);
-        pPGEwindow = pWindow;
-        pPGEwindow->SetWindowPosition(vWindowPos);
-        pPGEwindow->SetWindowSize(vWindowSize);
-        pPGEwindow->LinkToHost(this);
-
-        frameBounds.x = 0.0;
-        frameBounds.y = 0.0;
-        frameBounds.width = static_cast<double>(vWindowSize.x);
-        frameBounds.height = static_cast<double>(vWindowSize.y);
-        
-        return true;
-    }
-
-    bool Host_Apple_MacOS::CloseWindowFrame(olc::Window* pWindow){
-        pWindow->olc_OnWindowClose();
-        return true;
-    }
-
-    bool Host_Apple_MacOS::UpdateWindowFrameTitle(olc::Window* pWindow){
-        if (!pMacOSWindow) return false;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            pMacOSWindow->setTitle(pWindow->GetWindowTitle().c_str());
-        });
-        return true;
-    }
-
-    std::vector<void*> Host_Apple_MacOS::GetHostWindowDescriptor(olc::Window* pWindow){
-        olc_IgnoreUnused(pWindow);
-        // Ensure OpenGL renderer is created
-        if(pMacOSOpenGLRenderer == nullptr)
-            CreateCGLContextObj();
-
-        return vMacOSWindowDescriptors;
-       
-    }
-
-
-    bool Host_Apple_MacOS::SyncWithDesktopComposite()
-    {
-        /*
-         core.h SyncWithDesktopComposite is only called when vSync is enabled on each frame,
-         the method of enabling vSync varies between platforms, For macos we use a local var enableVSync,
-         set to false and toggle it on first call, so that vSync is only enabled once
-         */
-        
-        if(!enableVSync)
-        {
-            pMacOSOpenGLRenderer->enableVsync();
-            enableVSync = true;
-        }
-        
-        return enableVSync;
-    }
-
-    bool Host_Apple_MacOS::SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos)
-    {
-        olc_IgnoreUnused(pWindow);
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            pMacOSWindow->setCursorPosition(vPos.x, vPos.y);
-        });
-        return false;
-    }
-
-    bool Host_Apple_MacOS::SetMouseVisible(olc::Window* pWindow, const bool bVisible)
-    {
-        olc_IgnoreUnused(pWindow);
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            pMacOSWindow->setCursorVisibility(bVisible);
-        });
-        return true;
-    }
-
-    bool Host_Apple_MacOS::SetFullScreen(olc::Window* pWindow, const bool bFullScreen)
-    {
-        olc_IgnoreUnused(pWindow);
-        // if we're already in the specified state, return early
-        if(pMacOSWindow->isFullScreen() == bFullScreen)
-            return true;
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            pMacOSWindow->toggleFullScreen();
-        });
-        return true;
-    }
-
-    uint16_t Host_Apple_MacOS::ConvertPGE2WindowStyle()
-    {
-        uint16_t nsStyle = 0;
-        
-        // Note for MacOS: You cannot fully hide both the title bar and border, therefore we return titled when both are disabled, which is the closest we can get to a borderless window
-        if (!pPrimaryPGE->config.bShowWindowBorder || !pPrimaryPGE->config.bShowWindowTilebar) return static_cast<unsigned int>(NSWindowStyleMask::Titled);
-
-        // On MacOS, the maximize button is tied to the resizable style, therefore there is no need to implemenent a separate bShowWindowMaximiseButton config,
-        // For MacOS you can only disable the buttons, you can't hide them
-        if (pPrimaryPGE->config.bFullScreen)               nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::FullSizeContentView);      // Fullscreen window
-        if (pPrimaryPGE->config.bShowWindowTilebar)        nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Titled);          // Add a title bar
-        if (pPrimaryPGE->config.bShowWindowBorder)         nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Titled);          // Add a border
-        if (pPrimaryPGE->config.bResizeable)               nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Resizable);       // Enable resizing
-        if (pPrimaryPGE->config.bShowWindowMinimiseButton) nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Miniaturizable);  // Add Min Button
-        if (pPrimaryPGE->config.bShowWindowCloseButton)    nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Closable);        // Add Close Button
-
-        return nsStyle;
-        
-    }
-
-    bool Host_Apple_MacOS::OnApplicationStart(olc::PixelGameEngine* pPrimary){
-        pPrimaryPGE = pPrimary;
-        return true;
-    }
-
-    bool Host_Apple_MacOS::StartSystem(){
-                
-        // Create MacOS Application instance
-        pMacApplication = std::make_unique<olc::apis::macos::Application>();
-
-        // Set up application delegate event handlers
-        MacApplicationEventsHandler();
-
-        // Initialize and activate application first
-        pMacApplication->initialize();
-        pMacApplication->activate();
-        
-        // Pre-context start hook
-        pPrimaryPGE->OnPreContextStart();
-        
-        // Initialize the MacOS Window
-        pMacOSWindow = std::make_unique<olc::apis::macos::Window>(frameBounds.width, frameBounds.height, "OLC PGE 3 MacOS Demo");
-        pMacOSWindow->setPosition(frameBounds.x, frameBounds.y);
-        pMacOSWindow->setContentViewPosition(0, 0);
-        
-        // Set up window event handlers
-        MacWindowEventsHandler();
-        
-        // Create Input Event handler
-        pMacOSEventHandler = std::make_unique<olc::apis::macos::EventHandler>(*pMacOSWindow);
-            
-        // Setup Event handlers
-        MacEventsHandler();
-        
-        // Create the window
-        unsigned long styleMask = ConvertPGE2WindowStyle();
-        pMacOSWindow->show(styleMask);
-        pMacOSEventHandler->enable();
-        
-        //--- Start up our engine threading system ----
-        // Start the PGE context on the main thread
-        // Mark system as active
-        systemActive = true;
-
-        // Create system thread - handles gpu context
-        std::thread threadSystem([this]()
-        {
-            // Notify start of system thread
-            if (!this->OnSystemThreadStart())
-            {
-                // PGE->OnContextStart() failed, or user aborted OnUserCreate()
-                return;
-            }
-
-            // Main system loop
-            while (systemActive)
-            {
-                // Perform primary window update
-                if (!this->OnSystemTick())
-                {
-                    StopSystem();
-                }
-            }
-
-            // Notify end of system thread
-            if (!this->OnSystemThreadEnd())
-            {
-                // PGE->OnContextEnd() failed
-                return;
-            }
-        });
-
-        
-        // Start the main event loop (this will block)
-        pMacApplication->run();
-                
-        // Once the application run loop ends, join the system thread
-        if(threadSystem.joinable())
-            threadSystem.join();
-
-        // Post-context end hook
-        return pPrimaryPGE->OnPostContextEnd();
-
-    }
-
-    bool Host_Apple_MacOS::StopSystem()
-    {
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            // clean up and close application
-            if (pMacOSOpenGLRenderer)
-            {
-                pMacOSOpenGLRenderer->destoryContext();
-                pMacOSOpenGLRenderer = nullptr;
-            }
-            if (pMacOSWindow)
-            {
-                pMacOSWindow->destoryWindow();
-                pMacOSWindow = nullptr;
-            }
-            if (pMacApplication)
-            {
-                pMacApplication->stop();
-            }
-
-        });
-        systemActive = false;
-        return true;
-    }
-
-    bool Host_Apple_MacOS::OnSystemThreadStart()
-    {
-        // Hold back threading until application is fully initialized
-        bSkipFrame = ExecutePendingMainThreadTasks();
-        return pPrimaryPGE->OnContextStart();
-    }
-
-    bool Host_Apple_MacOS::OnSystemTick()
-    {
-        // Execute any pending main thread tasks
-        bSkipFrame = ExecutePendingMainThreadTasks();
-        return pPrimaryPGE->OnContextTick();
-    }
-
-    bool Host_Apple_MacOS::OnSystemThreadEnd()
-    {
-        return pPrimaryPGE->OnContextEnd();
-    }
-
-    bool Host_Apple_MacOS::OnApplicationEnd()
-    {
-        return true;
-    }
-
-
-//-- OS Window Event Handling -----
-   
-    olc::KeyboardLayout Host_Apple_MacOS::GetKeyboardLayout() const
-    {
-        // Get system locale from MacOS Application
-        // We need to wait until the application has launched to get the keyboard layout
-        // Therefore this function is called again from setDidFinishLaunchingCallback event
-        if (pMacApplication)
-        {
-            std::string locale = pMacApplication->getSystemLocale();
-            if (locale == "en_GB")
-            {
-                return olc::KeyboardLayout::QWERTY_UK;
-            }
-            else if (locale == "en_US")
-            {
-                return olc::KeyboardLayout::QWERTY_US;
-            }
-            else if (locale == "fr_FR")
-            {
-                return olc::KeyboardLayout::AZERTY;
-            }
-            else if (locale == "de_DE")
-            {
-                return olc::KeyboardLayout::QWERTZ;
-            }
-        }
-        // Default to QWERTY if unknown
-        return olc::KeyboardLayout::QWERTY_UK;
-    }   
-
-// ------- Priavate Main Thread Task Handling for MacOS Host -------
-
-    bool Host_Apple_MacOS::CreateCGLContextObj()
-    {
-        // This method should only be called on the PGE thread, use AddPendingMainThreadTask(CREATE_OPENGL_RENDERER); to queue it if needed
-        if(pMacOSOpenGLRenderer == nullptr)
-        {
-           vMacOSWindowDescriptors.clear(); // ensure we are starting fresh
-           pMacOSOpenGLRenderer = std::make_shared<olc::apis::macos::OpenGLRenderer>();
-           
-           dispatch_sync(dispatch_get_main_queue(), ^{
-                // Edge case for when the window is auto resize due to MacOS clamping to screen size
-               pMacOSWindow->getContentViewSize(frameBounds.width, frameBounds.height);
-               pPGEwindow->olc_OnWindowSize({static_cast<int>(frameBounds.width), static_cast<int>(frameBounds.height)});
-
-               pMacOSOpenGLRenderer->attachToWindow(*pMacOSWindow);
-               pMacOSOpenGLRenderer->setupContext();
-           });
-           
-           pMacGLConextObj = pMacOSOpenGLRenderer->getCGLContextObj();
-           
-           pMacOSOpenGLRenderer->setVsync(false);
-           
-           vMacOSWindowDescriptors.push_back(pMacGLConextObj); // Pointer to CGLContextObj
-           vMacOSWindowDescriptors.push_back(&bSkipFrame);     // Pointer to skip frame flag
-
-            // Set up OpenGL renderer for visual feedback
-           pMacOSOpenGLRenderer->makeCurrentContext();
-            
-            // Finally we set full screen if needed to ensure all out OpenGL setup is done before toggling full screen,
-            if(pPrimaryPGE->config.bFullScreen){
-                SetFullScreen(pPGEwindow, true);
-            }
-           
-        }
-        
-        return true;
-    }
-
-    bool Host_Apple_MacOS::ExecutePendingMainThreadTasks()
-    {
-        // 1: Check if main thread wants us to wait
-        std::unique_lock<std::mutex> lock(pgeThreadPendingTasksMutex);
-        
-        if (isPGEThreadResetting.load()) {
-            
-            // 2. PGE Thread signals it's waiting
-            {
-                std::lock_guard<std::mutex> mainLock(mainThreadPendingTasksMutex);
-                isMainThreadResetting = true;  // Signal to main thread we're waiting
-            }
-            mainThreadResetCondition.notify_all();  // Wake up main thread
-
-            // Note: MainThreadTasks(); will be called by the main thread to process tasks
-            
-            // 3. PGE Thread waits for main thread to finish
-            pgeThreadResetCondition.wait(lock, [this] { 
-                return !isPGEThreadResetting.load(); 
-            });
-
-            //4: return true indicating we processed tasks
-            return true;
-        }
-        else
-        {
-            // No pending tasks, just return
-            return false;
-        }
-    }
-
-    bool Host_Apple_MacOS::AddPendingMainThreadTask(MAINTASKS task)
-    {
-        // NOTE: Note: You should only add tasks that require main thread execution
-        vPendingMainThreadTasks.push_back(task);
-        MainThreadTasks();
-            
-        return true;
-    }
-    
-    bool Host_Apple_MacOS::MainThreadTasks()
-    {
-        bool res = false;
-        if(vPendingMainThreadTasks.empty())
-            return res;         // edge case
-        
-        // 1. Main Thread locks PGE Thread
-        {
-            std::lock_guard<std::mutex> lock(pgeThreadPendingTasksMutex);
-            isPGEThreadResetting = true;  // Signal PGE to stop
-        }
-        pgeThreadResetCondition.notify_all();  // Wake up PGE thread to check flag
-        
-        // 2. Main Thread waits for PGE Thread to acknowledge and wait
-        std::unique_lock<std::mutex> lock(mainThreadPendingTasksMutex);
-        mainThreadResetCondition.wait(lock, [this] {
-            return isMainThreadResetting.load(); // Wait until PGE signals it's waiting
-        });
-        
-        // Process any pending main thread tasks
-        for (const auto& task : vPendingMainThreadTasks)
-        {
-            switch (task)
-            {
-                case CREATE_OPENGL_RENDERER:
-                {
-                    // In this case, the PGE will be waiting for main thread to singal, so the ContextOBJ can be created
-                    res = false; // No need to skip frame
-                    break;
-                }
-                case RESIZE_WINDOW:
-                {
-                    // Resize window on main thread
-                    pMacOSWindow->getContentViewSize(frameBounds.width, frameBounds.height);
-                    pPGEwindow->olc_OnWindowSize({static_cast<int>(frameBounds.width), static_cast<int>(frameBounds.height)});
-                    pMacOSOpenGLRenderer->resetContextSize(frameBounds.width, frameBounds.height);
-                    res = true; // Skip frame to allow resize to take effect
-                    break;
-                }
-                case DEMINIMIZE_WINDOW:
-                case BECOME_ACTIVE:
-                {
-                    pPGEwindow->olc_OnFocus(true);
-                    break;
-                }
-                case MINIMIZE_WINDOW:
-                case RESIGN_ACTIVE:
-                {
-                    pPGEwindow->olc_OnFocus(false);
-                    break;
-                }
-                case NONE:
-                default:
-                {
-                    res = false;
-                    break;
-                }
-                    
-            }
-        }
-        vPendingMainThreadTasks.clear();
-        
-        // 4. Main Thread unlocks PGE Thread
-        {
-            std::lock_guard<std::mutex> lock(pgeThreadPendingTasksMutex);
-            isPGEThreadResetting = false;  // Release PGE thread
-            isMainThreadResetting = false; // Reset main thread flag
-        }
-        pgeThreadResetCondition.notify_all();  // Wake up PGE thread
-        return res;
-    }
-
-//------ Events Handlers -----
-
-    void Host_Apple_MacOS::MacApplicationEventsHandler()
-    {
-       pMacApplication->setWillFinishLaunchingCallback([]() { });
-       
-       pMacApplication->setDidFinishLaunchingCallback([&]() {
-           // Queue the Create OpenGL context task
-           vPendingMainThreadTasks.push_back(CREATE_OPENGL_RENDERER);
-           // We need to wait until the application has launched to get the keyboard layout
-           pPGEwindow->keyboard.UseKeyboardLayout(GetKeyboardLayout());
-        
-           
-       });
-       
-       pMacApplication->setWillTerminateCallback([&]() {
-		   //todo : add any cleanup code here if needed
-           });
-       
-       pMacApplication->setDidBecomeActiveCallback([]() { });
-       
-       pMacApplication->setWillResignActiveCallback([]() { });
-        
-    }
-
-    void Host_Apple_MacOS::MacWindowEventsHandler()
-    {
-        pMacOSWindow->setWindowDidResizeCallback([&]() {
-            AddPendingMainThreadTask(RESIZE_WINDOW);
-        });
-
-        pMacOSWindow->setWindowWillCloseCallback([&]() {
-            // NOTE: Do not add this event to PendingMainThreadTasks as it will cause deadlock since the main thread is required to process the close event but the close event is waiting on the main thread tasks to process it
-            pPGEwindow->olc_OnWindowClose();
-            pPGEwindow->olc_ShouldRemove();
-        });
-
-        pMacOSWindow->setWindowDidBecomeKeyCallback([&]() {
-            AddPendingMainThreadTask(BECOME_ACTIVE);
-        });
-
-        pMacOSWindow->setWindowDidResignKeyCallback([&]() {
-            AddPendingMainThreadTask(RESIGN_ACTIVE);
-        });
-       
-        pMacOSWindow->setWindowDidMiniaturizeCallback([&]() {
-            AddPendingMainThreadTask(MINIMIZE_WINDOW);
-        });
-       
-        pMacOSWindow->setWindowDidDeminiaturizeCallback([&]() {
-            AddPendingMainThreadTask(DEMINIMIZE_WINDOW);
-        });
-        
-    }
-    
-    // handles both down and up strokes for every supported key that isn't a modifier
-    void Host_Apple_MacOS::KeyboardEventHandler(const olc::apis::macos::KeyEvent& event, bool isPressed)
-    {
-        unsigned short keyCode = event.keyCode;
-        
-        // handle num clear/lock key only on the down stroke.
-        if(isPressed && keyCode == 71)
-        {
-            bNumLockActive = !bNumLockActive;
-            return;
-        }
-
-        if(!bNumLockActive)
-        {
-            // 84 down, 86 left, 88 right, 91 up >>> 125 down, 123 left, 124 right, 126 up
-            switch(keyCode)
-            {
-                case 84: keyCode = 125; break;
-                case 86: keyCode = 123; break;
-                case 88: keyCode = 124; break;
-                case 91: keyCode = 126; break;
-                default: break;
-            }
-        }
-
-        // The @ symbol does not change position from US - UK keyboards on MacOS, so we handle it here
-        if(event.modifierFlags & NSEventModifierFlagShift && event.keyCode == 39)
-            keyCode = 50;
-        
-        pPGEwindow->olc_OnKeyPress(mapKeys[keyCode], isPressed);
-    }
-
-    void Host_Apple_MacOS::MacEventsHandler()
-    {
-        // General MacOS key event handling code here
-        // Reference: https://eastmanreference.com/complete-list-of-applescript-key-codes
-
-        // Set up keyboard event handlers
-        pMacOSEventHandler->onKeyDown([&](const olc::apis::macos::KeyEvent& event) {
-            KeyboardEventHandler(event, true);
-        });
-
-        pMacOSEventHandler->onKeyUp([&](const olc::apis::macos::KeyEvent& event) {
-            KeyboardEventHandler(event, false);
-        });
-
-        // Set up keyboard flag event handlers
-        pMacOSEventHandler->onFlagsChanged([&](const olc::apis::macos::FlagsChangedEvent& event) {
-
-            static unsigned int prevFlags = 0;
-            unsigned int changedFlags = event.modifierFlags ^ prevFlags;
-            
-            // Check For Shift key
-            if (changedFlags & NSEventModifierFlagShift) {
-                bool isPressed = event.modifierFlags & NSEventModifierFlagShift;
-                pPGEwindow->olc_OnKeyPress(Key::SHIFT, isPressed);
-            }
-            
-            // Check for Control key
-            if (changedFlags & NSEventModifierFlagControl) {
-                bool isPressed = event.modifierFlags & NSEventModifierFlagControl;
-                pPGEwindow->olc_OnKeyPress(Key::CTRL, isPressed);
-            }
-
-            if (changedFlags & NSEventModifierFlagCommand) {
-                bool isPressed = event.modifierFlags & NSEventModifierFlagCommand;
-                if(isPressed)
-                    std::cout << "PGE3 doesn't currently support ALT/Command keys but it should.\n";
-                
-                // pPGEwindow->olc_OnKeyPress(Key::ALT, isPressed);
-            }
-
-            // caps lock doesn't appear to trigger any event
-            prevFlags = event.modifierFlags;
-        });
-
-        // Set up mouse event handlers
-        pMacOSEventHandler->onMouseDown([&](const olc::apis::macos::MouseEvent& event) {
-                pPGEwindow->olc_OnMouseButton(event.buttonNumber, true);
-        });
-        
-        pMacOSEventHandler->onMouseUp([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseButton(event.buttonNumber, false);
-        });
-        
-        pMacOSEventHandler->onMouseMoved([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseMove({static_cast<int>(event.x), static_cast<int>(event.y)});
-        });
-        
-        pMacOSEventHandler->onMouseDragged([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseMove({static_cast<int>(event.x), static_cast<int>(event.y)});
-        });
-
-        pMacOSEventHandler->onRightMouseDragged([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseMove({static_cast<int>(event.x), static_cast<int>(event.y)});
-        });
-
-        pMacOSEventHandler->onOtherMouseUp([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseButton(event.buttonNumber, false);
-        });
-
-        pMacOSEventHandler->onRightMouseDown([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseButton(event.buttonNumber, true);
-        });
-        
-        pMacOSEventHandler->onRightMouseUp([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseButton(event.buttonNumber, false);
-            
-        });
-
-        pMacOSEventHandler->onOtherMouseDown([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseButton(event.buttonNumber, true);
-        });
-
-         pMacOSEventHandler->onOtherMouseUp([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseButton(event.buttonNumber, false);
-        });
-
-        pMacOSEventHandler->onOtherMouseDragged([&](const olc::apis::macos::MouseEvent& event) {
-            pPGEwindow->olc_OnMouseMove({static_cast<int>(event.x), static_cast<int>(event.y)});
-        });
-
-        pMacOSEventHandler->onScrollWheel([&](const olc::apis::macos::ScrollWheelEvent& event) {
-            // Although MacOS provides both deltaX and deltaY, we will only use deltaY for vertical scrolling
-            pPGEwindow->olc_OnMouseWheel(static_cast<int>(event.deltaY));
-        });
-
-         // Touch events — map trackpad multi-touch to hw::Touch via olc_OnTouch
-        pMacOSEventHandler->onTouchBegan([&](const olc::apis::macos::TouchEvent& event) {
-            pPGEwindow->olc_OnTouch(event.touchID,
-                {static_cast<float>(event.x), static_cast<float>(event.y)},
-                true, false,
-                {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
-        });
-
-        pMacOSEventHandler->onTouchMoved([&](const olc::apis::macos::TouchEvent& event) {
-            pPGEwindow->olc_OnTouch(event.touchID,
-                {static_cast<float>(event.x), static_cast<float>(event.y)},
-                false, false,
-                {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
-        });
-
-        pMacOSEventHandler->onTouchEnded([&](const olc::apis::macos::TouchEvent& event) {
-            pPGEwindow->olc_OnTouch(event.touchID,
-                {static_cast<float>(event.x), static_cast<float>(event.y)},
-                false, true,
-                {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
-        });
-
-        pMacOSEventHandler->onTouchCancelled([&](const olc::apis::macos::TouchEvent& event) {
-            pPGEwindow->olc_OnTouch(event.touchID,
-                {static_cast<float>(event.x), static_cast<float>(event.y)},
-                false, true,  // treat cancel as release
-                {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
-        });
-
-        // Stylus (tablet) events — full pressure, tilt and rotation data
-        pMacOSEventHandler->onStylus([&](const olc::apis::macos::StylusEvent& event) {
-            
-            pPGEwindow->olc_OnTouch(
-                event.touchID,
-                {static_cast<float>(event.x), static_cast<float>(event.y)},
-                event.bPress,
-                event.bRelease,
-                {1.0f, 1.0f},       // stylus contact size — nominal 1x1
-                true,               // bStylus = true
-                event.pressure,
-                event.rotation,
-                {event.tiltX, event.tiltY}
-            );
-        });
-        
-    }
-
-}
-
 
 // Application consts selectors
 static constexpr const char* kRespondsToSelector                = "respondsToSelector:";
@@ -13345,596 +11847,9 @@ extern "C" {
 
 } // extern "C"
 
-
 #endif
 
 #if OLC_HOST == OLC_HOST_IOS
-namespace olc::host {
-    
-
-    // NSEventModifierFlags values
-    constexpr unsigned int NSEventModifierFlagCapsLock   = 1 << 16; // 0x10000
-    constexpr unsigned int NSEventModifierFlagShift      = 1 << 17; // 0x20000
-    constexpr unsigned int NSEventModifierFlagControl    = 1 << 18; // 0x40000
-    constexpr unsigned int NSEventModifierFlagCommand    = 1 << 20; // 0x100000
-
-    Host_Apple_iOS::Host_Apple_iOS()
-    {
-         // Reference: https://eastmanreference.com/complete-list-of-applescript-key-codes
-        mapKeys[0x00] = Key::NONE;
-
-        // Map macOS key codes to olc::Key codes
-        mapKeys[4]  = Key::A;
-        mapKeys[5]  = Key::B;
-        mapKeys[6]  = Key::C;
-        mapKeys[7]  = Key::D;
-        mapKeys[8]  = Key::E;
-        mapKeys[9]  = Key::F;
-        mapKeys[10] = Key::G;
-        mapKeys[11] = Key::H;
-        mapKeys[12] = Key::I;
-        mapKeys[13] = Key::J;
-        mapKeys[14] = Key::K;
-        mapKeys[15] = Key::L;
-        mapKeys[16] = Key::M;
-        mapKeys[17] = Key::N;
-        mapKeys[18] = Key::O;
-        mapKeys[19] = Key::P;
-        mapKeys[20] = Key::Q;
-        mapKeys[21] = Key::R;
-        mapKeys[22] = Key::S;
-        mapKeys[23] = Key::T;
-        mapKeys[24] = Key::U;
-        mapKeys[25] = Key::V;
-        mapKeys[26] = Key::W;
-        mapKeys[27] = Key::X;
-        mapKeys[28] = Key::Y;
-        mapKeys[29] = Key::Z;
-
-        // Numeric keys
-        mapKeys[30] = Key::K1;
-        mapKeys[31] = Key::K2;
-        mapKeys[32] = Key::K3;
-        mapKeys[33] = Key::K4;
-        mapKeys[34] = Key::K5;
-        mapKeys[35] = Key::K6;
-        mapKeys[36] = Key::K7;
-        mapKeys[37] = Key::K8;
-        mapKeys[38] = Key::K9;
-        mapKeys[39] = Key::K0;
-        
-        // Other Keys
-        mapKeys[40]  = Key::ENTER;      // Return
-        mapKeys[41]  = Key::ESCAPE;     // Escape
-        mapKeys[42]  = Key::BACK;       // Delete (Backspace)
-        mapKeys[43]  = Key::TAB;        // Tab
-        mapKeys[44]  = Key::SPACE;      // Space
-        mapKeys[45]  = Key::DEL;        // Forward Delete
-        mapKeys[57]  = Key::CAPS_LOCK;  // Caps Lock
-        mapKeys[114] = Key::INS;        // Help (Insert equivalent)
-
-        // Function Keys
-        mapKeys[58] = Key::F1;
-        mapKeys[59] = Key::F2;
-        mapKeys[60] = Key::F3;
-        mapKeys[61] = Key::F4;
-        mapKeys[62] = Key::F5;
-        mapKeys[63] = Key::F6;
-        mapKeys[64] = Key::F7;
-        mapKeys[65] = Key::F8;
-        mapKeys[66] = Key::F9;
-        mapKeys[67] = Key::F10;
-        mapKeys[68] = Key::F11;
-        mapKeys[69] = Key::F12;
-
-        mapKeys[74] = Key::HOME;       // Home
-        mapKeys[75] = Key::PGUP;       // Page Up
-        mapKeys[76] = Key::DEL;        // Delete (Forward Delete)
-        mapKeys[77] = Key::END;        // End
-        mapKeys[78] = Key::PGDN;       // Page Down
-       
-        
-        // Arrow Keys
-        mapKeys[79] = Key::RIGHT;
-        mapKeys[80] = Key::LEFT;
-        mapKeys[81] = Key::DOWN;
-        mapKeys[82] = Key::UP;
-        
-        // CHRL, SHIFT, Instert (Help) Keys
-        mapKeys[117] = Key::INS;          // Insert (Help key on Mac)
-        mapKeys[224]  = Key::CTRL;        // Left Control
-        mapKeys[225]  = Key::SHIFT;       // Left Shift
-        mapKeys[229]  = Key::SHIFT;       // Left Shift
-       
-        // Symbol Keys (OEM equivalents)
-        mapKeys[51] = Key::OEM_1;       // On US and UK keyboards this is the ';:' key
-        mapKeys[56] = Key::OEM_2;       // On US and UK keyboards this is the '/?' key
-        mapKeys[53] = Key::OEM_3;       // On US and UK keyboards this is the '`~' key (Grave accent `)
-        mapKeys[47] = Key::OEM_4;       // On US and UK keyboards this is the '[{' key
-        mapKeys[49] = Key::OEM_5;       // On US keyboard this is '\|' key.
-        mapKeys[48] = Key::OEM_6;       // On US and UK keyboards this is the ']}' key
-        mapKeys[52] = Key::OEM_7;       // On US keyboard this is the single/double quote key. On UK, this is the single quote/@ symbol key
-        mapKeys[24] = Key::EQUALS;      // Equal sign =
-        mapKeys[43] = Key::COMMA;       // Comma ,
-        mapKeys[27] = Key::MINUS;       // Minus -
-        mapKeys[47] = Key::PERIOD;      // Period .
-        
-        // Unknown and may not be supported, but included for completeness will come back to this
-        mapKeys[84] = Key::NP_DIV;      // Numpad /
-        mapKeys[85] = Key::NP_MUL;      // Numpad *
-        mapKeys[86] = Key::NP_SUB;      // Numpad -
-        mapKeys[87] = Key::NP_ADD;      // Numpad +
-        mapKeys[88] = Key::RETURN;      // Numpad Enter
-        mapKeys[89] = Key::NP1;
-        mapKeys[90] = Key::NP2;
-        mapKeys[91] = Key::NP3;
-        mapKeys[92] = Key::NP4;
-        mapKeys[93] = Key::NP5;
-        mapKeys[94] = Key::NP6;
-        mapKeys[95] = Key::NP7;
-        mapKeys[96] = Key::NP8;
-        mapKeys[97] = Key::NP9;
-        mapKeys[98] = Key::NP0;
-        mapKeys[99] = Key::NP_DECIMAL;  // Numpad .
-        mapKeys[915] = Key::PAUSE;      // Not Supported, F16 (often used as pause)
-        mapKeys[916] = Key::SCROLL;     // Not Supported, F14 (scroll lock equivalent)
-        mapKeys[917] = Key::OEM_8;      // Section sign § (varies by keyboard)
-    }
-
-    bool Host_Apple_iOS::AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen)
-    {
-        olc_IgnoreUnused(bFullScreen); 
-        pPGEwindow = pWindow;
-        pPGEwindow->SetWindowPosition(vWindowPos);
-        pPGEwindow->SetWindowSize(vWindowSize);
-        pPGEwindow->LinkToHost(this);
-
-        // iOS typically uses full screen, but we'll store the requested dimensions
-        frameBounds.x = static_cast<double>(vWindowPos.x);
-        frameBounds.y = static_cast<double>(vWindowPos.y);
-        frameBounds.width = static_cast<double>(vWindowSize.x);
-        frameBounds.height = static_cast<double>(vWindowSize.y);
-        
-        return true;
-    }
-
-    bool Host_Apple_iOS::CloseWindowFrame(olc::Window* pWindow)
-    {
-        if (!pIOSViewController) return false;
-        if (!pWindow) return false;
-        pWindow->olc_OnWindowClose();
-        return true;
-    }
-
-    bool Host_Apple_iOS::UpdateWindowFrameTitle(olc::Window* pWindow)
-    {
-        if (!pIOSViewController) return false;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            pIOSViewController->setTitle(pWindow->GetWindowTitle().c_str());
-        });
-        return true;
-    }
-
-    std::vector<void*> Host_Apple_iOS::GetHostWindowDescriptor(olc::Window* pWindow)
-    {
-        return vIOSWindowDescriptors;
-    }
-
-    bool Host_Apple_iOS::SyncWithDesktopComposite()
-    {
-        if(!enableVSync)
-        {
-            pIOSOpenGLRenderer->enableVsync();
-            enableVSync = true;
-        }
-        
-        return enableVSync;
-    }
-
-    bool Host_Apple_iOS::SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos)
-    {
-        olc_IgnoreUnused(pWindow);
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            //pMacOSWindow->setCursorPosition(vPos.x, vPos.y);
-        });
-        return false;
-    }
-
-    bool Host_Apple_iOS::SetMouseVisible(olc::Window* pWindow, const bool bVisible)
-    {
-        olc_IgnoreUnused(pWindow);
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            //pMacOSWindow->setCursorVisibility(bVisible);
-        });
-        return true;
-    }
-
-    bool Host_Apple_iOS::SetFullScreen(olc::Window* pWindow, const bool bFullScreen)
-    {
-        olc_IgnoreUnused(pWindow);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            //pMacOSWindow->toggleFullScreen();
-        });
-        return true;
-    }
-
-     bool Host_Apple_iOS::OnApplicationStart(olc::PixelGameEngine* pPrimary){
-        pPrimaryPGE = pPrimary;
-        return true;
-    }
-
-    bool Host_Apple_iOS::StartSystem(){
-        
-        // Pre-context start hook
-        pPrimaryPGE->OnPreContextStart();
-        
-        // Create iOS Application instance
-        pIOSApplication = std::make_unique<olc::apis::ios::Application>();
-        
-        // Set up application delegate event handlers
-        IOSApplicationEventsHandler();
-        
-        // Initialize and activate application first
-        pIOSApplication->initialize();
-
-        return true;
-
-    }
-
-    bool Host_Apple_iOS::StopSystem()
-    {
-        // Note: iOS applications typically don't have a "stop" method, but we can clean up resources here if needed
-        //dispatch_sync(dispatch_get_main_queue(), ^{
-            
-        //});
-        return true;
-    }
-
-    bool Host_Apple_iOS::OnSystemThreadStart()
-    {
-        return pPrimaryPGE->OnContextStart();
-    }
-
-    bool Host_Apple_iOS::OnSystemTick()
-    {
-        return pPrimaryPGE->OnContextTick();
-    }
-
-    bool Host_Apple_iOS::OnSystemThreadEnd()
-    {
-        return pPrimaryPGE->OnContextEnd();
-    }
-
-    bool Host_Apple_iOS::OnApplicationEnd()
-    {
-        return true;
-    }
-
-    std::string Host_Apple_iOS::GetApplicationPath()
-    {
-        if(pIOSApplication)
-        {
-            return pIOSApplication->getApplicationPath();
-        }
-        return "ACCESS-DEINED";
-    }
-
-    olc::KeyboardLayout Host_Apple_iOS::GetKeyboardLayout() const
-    {
-        // Get system locale from MacOS Application
-        // We need to wait until the application has launched to get the keyboard layout
-        // Therefore this function is called again from setDidFinishLaunchingCallback event
-        if (pIOSApplication)
-        {
-            std::string locale = pIOSApplication->getSystemLocale();
-            if (locale == "en_GB")
-            {
-                return olc::KeyboardLayout::QWERTY_UK;
-            }
-            else if (locale == "en_US")
-            {
-                return olc::KeyboardLayout::QWERTY_US;
-            }
-            else if (locale == "fr_FR")
-            {
-                return olc::KeyboardLayout::AZERTY;
-            }
-            else if (locale == "de_DE")
-            {
-                return olc::KeyboardLayout::QWERTZ;
-            }
-        }
-        // Default to QWERTY if unknown
-        return olc::KeyboardLayout::QWERTY_UK;
-    }
-
-
-    void Host_Apple_iOS::UpdateIOSViewFrameBounds(olc::apis::ios::DeviceOrientation orientation)
-    {
-        // NOTE: iOS handles rotation automatically, but we need to adjust the PGE window size accordingly
-        // IMPORTANT: PortraitUpsideDown is not implemented, in short have a happy life and forget this exist ;)
-        CurrentOrientation = orientation;
-        switch (orientation) {
-            case olc::apis::ios::DeviceOrientation::Portrait:
-                pIOSViewController->getViewSize(frameBounds.width, frameBounds.height);
-                pPGEwindow->olc_OnWindowSize({static_cast<int>(frameBounds.width), static_cast<int>(frameBounds.height)});
-                break;
-            case olc::apis::ios::DeviceOrientation::LandscapeLeft:
-            case olc::apis::ios::DeviceOrientation::LandscapeRight:
-                pIOSViewController->getViewSize(frameBounds.width, frameBounds.height);
-                pPGEwindow->olc_OnWindowSize({static_cast<int>(frameBounds.height), static_cast<int>(frameBounds.width)});
-                break;
-            case olc::apis::ios::DeviceOrientation::FaceUp:
-            case olc::apis::ios::DeviceOrientation::FaceDown:
-            case olc::apis::ios::DeviceOrientation::PortraitUpsideDown:
-            case olc::apis::ios::DeviceOrientation::Unknown:
-            default:
-                break;
-        }
-        
-
-    }
-
-    void Host_Apple_iOS::IOSApplicationEventsHandler()
-    {
-        // Application event handling code here
-        // Set application delegate event handlers
-        pIOSApplication->setDidFinishLaunchingCallback([&]() {
-            // Tell the PGE 3.0 we have loaded the application
-          
-            pIOSApplication->activate();
-            
-            // Initialize the iOS View Controller
-            pIOSViewController = std::make_unique<olc::apis::ios::ViewController>(frameBounds.width, frameBounds.height, "OLC PGE 3 iOS Demo");
-            
-            // Set up view controller event handlers
-            IOSViewControllerEventsHandler();
-            
-            // Present the view controller
-            pIOSViewController->present();
-            
-            // App became active (foreground)
-            if(pIOSOpenGLRenderer == nullptr)
-            {
-                vIOSWindowDescriptors.clear(); // ensure we are starting fresh
-                pIOSOpenGLRenderer = std::make_shared<olc::apis::ios::OpenGLRenderer>();
-                
-                pIOSOpenGLRenderer->attachToViewController(*pIOSViewController);
-                pIOSOpenGLRenderer->setupContext();
-
-                pIOSGLContextObj = pIOSOpenGLRenderer->getEAGLContext();
-                
-                pIOSOpenGLRenderer->setVsync(false);
-                
-                vIOSWindowDescriptors.push_back(pIOSGLContextObj);
-            }
-            
-            // Set up OpenGL renderer for visual feedback
-            pIOSOpenGLRenderer->makeCurrentContext();
-            
-            //std::cout << "iOS Application did finish launching." << std::endl;
-        });
-        
-        pIOSApplication->setWillTerminateCallback([&]() {
-            // TODO: Implement olc_OnApplicationTerminate in window.h/cpp
-            //std::cout << "iOS Application will terminate." << std::endl;
-        });
-        
-        pIOSApplication->setDidBecomeActiveCallback([&]() {
-            // TODO: manage thread resuming
-            
-            if(pPGEwindow)
-                pPGEwindow->olc_OnFocus(true);
-            ///std::cout << "iOS Application did become active." << std::endl;
-        });
-        
-        pIOSApplication->setWillResignActiveCallback([&]() {
-            
-            if(pPGEwindow)
-                pPGEwindow->olc_OnFocus(false);
-            // TODO: manage thread pausing
-            //std::cout << "iOS Application will resign active." << std::endl;
-        });
-        
-        pIOSApplication->setDidEnterBackgroundCallback([&]() {
-            // App entered background
-            if(pPGEwindow)
-                pPGEwindow->olc_OnFocus(false);
-            std::cout << "iOS Application did enter background." << std::endl;
-        });
-        
-        pIOSApplication->setWillEnterForegroundCallback([&]() {
-            // App will enter foreground
-            if(pPGEwindow)
-                pPGEwindow->olc_OnFocus(true);
-            //std::cout << "iOS Application will enter foreground." << std::endl;
-        });
-    }
-
-    void Host_Apple_iOS::IOSViewControllerEventsHandler()
-    {
-        // View controller event handling code here
-        pIOSViewController->setViewDidLoadCallback([&]() {
-            // View controller loaded
-                      
-            // Set up GLKView after presentation
-            pIOSGLKView = std::make_unique<olc::apis::ios::GLKView>(*pIOSViewController);
-            // Setup Event handlers (including touch events)
-            IOSGLKViewEventHandler();
-            if (!pIOSGLKView->initialize())
-            {
-                std::cerr << "Failed to initialize GLKView." << std::endl;
-                return;
-            }
-            pIOSGLKView->enableTouchHandling();
-            
-            auto test = pIOSGLKView->isMultipleTouchEnabled();
-            if(!test)
-                pIOSGLKView->setMultipleTouchEnabled(true);
-            pIOSGLKView->debugTouchSetup();
-            //std::cout << "iOS View Controller did load." << std::endl;
-        });
-
-        pIOSViewController->setViewWillAppearCallback([&]() {
-            // View will appear
-
-            //std::cout << "iOS View Controller will appear." << std::endl;
-        });
-
-        pIOSViewController->setViewDidAppearCallback([&]() {
-            // View appeared
-            
-            if(!bIOSDrawing)
-            {
-                pIOSViewController->setPaused(false); // Start drawing
-            }
-            //std::cout << "iOS View Controller did appear." << std::endl;
-        });
-
-        pIOSViewController->setViewWillDisappearCallback([&]() {
-            // View will disappear
-            pPGEwindow->olc_OnWindowClose();
-            //std::cout << "iOS View Controller will disappear." << std::endl;
-        });
-
-        pIOSViewController->setViewDidDisappearCallback([&]() {
-            // View disappeared
-                        
-            pPGEwindow->olc_ShouldRemove();
-            //std::cout << "iOS View Controller did disappear." << std::endl;
-        });
-        
-        pIOSViewController->setViewDidLayoutSubviewsCallback([&]() {
-            
-            UpdateIOSViewFrameBounds(CurrentOrientation);
-        });
-        
-        pIOSViewController->setUpdateCallback( [&]() {
-            // This is where we will call the engine's main loop for rendering
-            
-        });
-        
-        // Device orientation changes
-        pIOSViewController->setOrientationChangedCallback([&](olc::apis::ios::DeviceOrientation orientation) {
-            UpdateIOSViewFrameBounds(orientation);
-        });
-        
-    }
-
-    // handles both down and up strokes for every supported key that isn't a modifier
-    void Host_Apple_iOS::KeyboardEventHandler(uint16_t nKeyCode, uint nModifierFlags, bool isPressed){
-        // handle num clear/lock key only on the down stroke.
-        if(isPressed && nKeyCode == 83)
-        {
-            bNumLockActive = !bNumLockActive;
-            return;
-        }
-        
-        if(!bNumLockActive)
-        {
-            // 94 right,  92 left,  90 down, 96 up >>> 79 RIGHT, 80 LEFT, 81 DOWN, 82 UP
-            switch(nKeyCode)
-            {
-                case 94: nKeyCode = 79; break;
-                case 92: nKeyCode = 80; break;
-                case 90: nKeyCode = 81; break;
-                case 96: nKeyCode = 82; break;
-                default: break;
-            }
-        }
-        
-        // Check Modifier flags for Shift, Control, Caps, and Command keys
-        unsigned int changedFlags = nModifierFlags ^ prevFlags;
-        
-        // Check For Shift key
-        if (changedFlags & NSEventModifierFlagShift) {
-            bool isPressed = nModifierFlags & NSEventModifierFlagShift;
-            pPGEwindow->olc_OnKeyPress(Key::SHIFT, isPressed);
-        }
-        
-        // Check for Control key
-        if (changedFlags & NSEventModifierFlagControl) {
-            bool isPressed = nModifierFlags & NSEventModifierFlagControl;
-            pPGEwindow->olc_OnKeyPress(Key::CTRL, isPressed);
-        }
-
-        // Check for Option / ALT key
-        if (changedFlags & NSEventModifierFlagCommand) {
-            bool isPressed = nModifierFlags & NSEventModifierFlagCommand;
-            if(isPressed)
-                std::cout << "PGE3 doesn't currently support ALT/Command keys but it should.\n";
-        }
-
-        prevFlags = nModifierFlags;
-        
-        pPGEwindow->olc_OnKeyPress(mapKeys[nKeyCode], isPressed);
-        
-   }
-
-    void Host_Apple_iOS::IOSGLKViewEventHandler()
-    {
-        
-        // Set up drawing callback for GLKView
-        pIOSGLKView->setDrawCallback([&](double x, double y, double width, double height) {
-            
-            pIOSOpenGLRenderer->makeCurrentContext();
-            
-            if(!bPGEInitialized)
-            {
-                pPrimaryPGE->OnContextStart();
-                bPGEInitialized = true;
-            }
-            pPrimaryPGE->OnContextTick();
-        });
-        
-        // Set up touch event handlers (iOS primary input method)
-        pIOSGLKView->setTouchBeganCallback([&](const olc::apis::ios::TouchEvent& event) {
-            // Convert touch to mouse button press for compatibility
-            pPGEwindow->olc_OnTouch(event.touchID,
-                    {static_cast<float>(event.x), static_cast<float>(event.y)},
-                    true, false,
-                    {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
-            //std::cout << "ID: " << event.touchID << " Touch Began at (" << event.x << ", " << event.y << ") with size (" << event.sizeX << ", " << event.sizeY << ")" << std::endl;
-        });
-
-        pIOSGLKView->setTouchMovedCallback([&](const olc::apis::ios::TouchEvent& event) {
-              pPGEwindow->olc_OnTouch(event.touchID,
-                    {static_cast<float>(event.x), static_cast<float>(event.y)},
-                    false, false,
-                    {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
-            //std::cout << "ID: " << event.touchID << " Touch Moved to (" << event.x << ", " << event.y << ") with size (" << event.sizeX << ", " << event.sizeY << ")" << std::endl;
-        });
-
-        pIOSGLKView->setTouchEndedCallback([&](const olc::apis::ios::TouchEvent& event) {
-              pPGEwindow->olc_OnTouch(event.touchID,
-                    {static_cast<float>(event.x), static_cast<float>(event.y)},
-                    false, true,
-                    {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
-            //std::cout << "ID: " << event.touchID << " Touch Ended at (" << event.x << ", " << event.y << ") with size (" << event.sizeX << ", " << event.sizeY << ")" << std::endl;
-        });
-
-        pIOSGLKView->setTouchCancelledCallback([&](const olc::apis::ios::TouchEvent& event) {
-             pPGEwindow->olc_OnTouch(event.touchID,
-                    {static_cast<float>(event.x), static_cast<float>(event.y)},
-                    false, true,  // treat cancel as release
-                    {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
-            //std::cout << "ID: " << event.touchID << " Touch Cancelled at (" << event.x << ", " << event.y << ") with size (" << event.sizeX << ", " << event.sizeY << ")" << std::endl;
-        });
-
-        // Set up keyboard event handlers
-        pIOSGLKView->setKeyDownCallback([&](uint16_t keyCode, const std::string& characters, uint modifierFlags) {
-            //std::cout << "Key Down - Code: " << keyCode << ", Chars: '" << characters << "'" << std::endl;
-            KeyboardEventHandler(keyCode, modifierFlags, true);
-        });
-
-        pIOSGLKView->setKeyUpCallback([&](uint16_t keyCode, const std::string& characters, uint modifierFlags) {
-            //std::cout << "Key Up - Code: " << keyCode << std::endl;
-            KeyboardEventHandler(keyCode, modifierFlags, false);
-        });
-    }
-}
-
-
 
 // UIApplication and related class names
 static constexpr const char* kNSAutoreleasePoolClass            = "NSAutoreleasePool";
@@ -16241,6 +14156,2366 @@ void device_getScreenBounds(double* width, double* height) {
 
 #endif
 
+
+#if !defined(OLC_USE_WXWIDGETS)
+
+#if OLC_HOST == OLC_HOST_NONE
+namespace olc::host
+{
+	// Make OS Create a window frame, associated with olc::Window
+	bool Host_None::AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen)
+	{
+		return true;
+	}
+
+	// Make OS Close a window frame, associated with olc::Window
+	bool Host_None::CloseWindowFrame(olc::Window* pWindow)
+	{
+		return true;
+	}
+
+	// Make OS Update a window frame title, associated with olc::Window
+	bool Host_None::UpdateWindowFrameTitle(olc::Window* pWindow)
+	{
+		return true;
+	}
+
+	// Get OS-specific window descriptor(s) for given olc::Window
+	std::vector<void*> Host_None::GetHostWindowDescriptor(olc::Window* pWindow)
+	{
+		return {};
+	}
+
+	// Wait for OS desktop refresh (for smooooth vsync)
+	bool Host_None::SyncWithDesktopComposite()
+	{
+		return true;
+	}
+
+	// Force the mouse position in pixels relative to window
+	bool Host_None::SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos)
+	{
+		return true;
+	}
+	
+	// Show or hide mouse cursor for given window
+	bool Host_None::SetMouseVisible(olc::Window* pWindow, const bool bVisible)
+	{
+		return true;
+	}
+
+	olc::KeyboardLayout Host_None::GetKeyboardLayout() const
+	{
+		return OLC_DEFAULT_KEYBOARD_LAYOUT;
+	}
+
+	// Called at very start of application
+	bool Host_None::OnApplicationStart(olc::PixelGameEngine* pPrimary)
+	{
+		pPrimaryPGE = pPrimary;
+		return true;
+	}
+
+	// Called to start the host - this may mean different things on different hosts
+	// It MUST block until system is requested to exit
+	bool Host_None::StartSystem()
+	{
+		pPrimaryPGE->OnPreContextStart();
+
+		systemActive = true;
+
+		if(!OnSystemThreadStart())
+			return pPrimaryPGE->OnPostContextEnd();
+		
+		while(systemActive)
+		{
+			if(!OnSystemTick())
+			{
+				StopSystem();
+			}
+		}
+
+		OnSystemThreadEnd();
+
+		return pPrimaryPGE->OnPostContextEnd();
+	}
+
+	// Called to stop the host, and shutdown all resources
+	bool Host_None::StopSystem()
+	{
+		systemActive = false;
+		return true;
+	}
+
+	// Called at start of system event loop
+	bool Host_None::OnSystemThreadStart()
+	{
+		return pPrimaryPGE->OnContextStart();
+	}
+
+	// Called to perform primary window update
+	bool Host_None::OnSystemTick()
+	{
+		return pPrimaryPGE->OnContextTick();
+	}
+	
+	// Called at end of system event loop
+	bool Host_None::OnSystemThreadEnd()
+	{
+		return pPrimaryPGE->OnContextEnd();
+	}
+	
+	// Called at very end of application
+	bool Host_None::OnApplicationEnd()
+	{
+		return true;
+	}
+}
+#endif
+
+#if OLC_HOST == OLC_HOST_WINDOWS
+namespace olc::host
+{
+	bool Host_Windows_WinAPI::OnApplicationStart(olc::PixelGameEngine* pPrimary)
+	{
+		pPrimaryPGE = pPrimary;
+		return true;
+	}
+
+	bool Host_Windows_WinAPI::StartSystem()
+	{
+		// Pre-context start hook
+		pPrimaryPGE->OnPreContextStart();
+
+		// Mark system as active
+		systemActive = true;
+
+		// Create system thread - handles gpu context
+		std::thread threadSystem([this]()
+			{
+				// Notify start of system thread
+				if (!this->OnSystemThreadStart())
+				{
+					// PGE->OnContextStart() failed, or user aborted OnUserCreate()
+					return;
+				}
+
+				// Main system loop
+				while (systemActive)
+				{
+					// Perform primary window update
+					if (!this->OnSystemTick())
+					{
+						StopSystem();
+					}
+				}
+
+				// Notify end of system thread
+				if (!this->OnSystemThreadEnd())
+				{
+					// PGE->OnContextEnd() failed
+					return;
+				}
+			});
+
+		// Blocking event loop on this thread - handles windows
+		MSG msg;
+		while (GetMessage(&msg, NULL, 0, 0) > 0 && systemActive)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		systemActive = false;
+		if(threadSystem.joinable())
+			threadSystem.join();
+
+		// Post-context end hook
+		return pPrimaryPGE->OnPostContextEnd();
+	}
+
+	bool Host_Windows_WinAPI::StopSystem()
+	{
+		systemActive = false;
+		return true;
+	}
+
+	bool Host_Windows_WinAPI::OnSystemThreadStart()
+	{
+		return pPrimaryPGE->OnContextStart();
+	}
+
+	bool Host_Windows_WinAPI::OnSystemTick()
+	{
+		return pPrimaryPGE->OnContextTick();
+	}
+
+	bool Host_Windows_WinAPI::OnSystemThreadEnd()
+	{
+		return pPrimaryPGE->OnContextEnd();
+	}
+
+	bool Host_Windows_WinAPI::OnApplicationEnd()
+	{
+		return true;
+	}
+
+
+
+	// ALL WINDOWS SPECIFIC GUBBINS BELOW HERE
+
+
+	// Forward Declaration
+	static LRESULT CALLBACK WINAPI_EventHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+
+	// Static linkage to lpfnWndProc - the hWnd is tagged with meta-info to get
+	// access to the actual host instance, which can more conveninetly process
+	// the event across multiple window instances
+	static LRESULT CALLBACK WINAPI_EventHandler(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		// CreateWindowEx will fire a WM_CREATE event at the window, which we're
+		// not interested in, and this will occur before we've populated our 
+		// linkage maps. We can detect for this condition here which means
+		// subsequent look-ups dont fail. NOTE: Do not assume WM_CREATE is the
+		// first message that is sent, its just one that we know is reliably sent.
+		if (uMsg == WM_CREATE)
+		{
+			// Associate the window's little blob of user memory with host iface
+			auto cfg = ((CREATESTRUCT*)lParam)->lpCreateParams;
+			SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)cfg);
+		}
+		else
+		{
+			// If this returns a value, then the host iface should be responsible
+			// for handling the message.
+			auto host = (Host_Windows_WinAPI*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			if (host)
+				return host->OnWindowEvent(hWnd, uMsg, wParam, lParam);
+		}
+		
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
+	std::wstring Host_Windows_WinAPI::ConvertS2W(std::string s)
+	{
+#ifdef __MINGW32__
+		wchar_t* buffer = new wchar_t[s.length() + 1];
+		mbstowcs(buffer, s.c_str(), s.length());
+		buffer[s.length()] = L'\0';
+#else
+		int count = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, NULL, 0);
+		wchar_t* buffer = new wchar_t[count];
+		MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, buffer, count);
+#endif
+		std::wstring w(buffer);
+		delete[] buffer;
+		return w;
+	}
+
+	Host_Windows_WinAPI::Host_Windows_WinAPI()
+	{
+		// Map Windows Defined VK_ Codes to olc::KeyCodes
+		mapKeys[0x00] = Key::NONE;
+
+		// Windows doesn't define A-Z
+		mapKeys[0x41] = Key::A;
+		mapKeys[0x42] = Key::B;
+		mapKeys[0x43] = Key::C;
+		mapKeys[0x44] = Key::D;
+		mapKeys[0x45] = Key::E;
+		mapKeys[0x46] = Key::F;
+		mapKeys[0x47] = Key::G;
+		mapKeys[0x48] = Key::H;
+		mapKeys[0x49] = Key::I;
+		mapKeys[0x4A] = Key::J;
+		mapKeys[0x4B] = Key::K;
+		mapKeys[0x4C] = Key::L;
+		mapKeys[0x4D] = Key::M;
+		mapKeys[0x4E] = Key::N;
+		mapKeys[0x4F] = Key::O;
+		mapKeys[0x50] = Key::P;
+		mapKeys[0x51] = Key::Q;
+		mapKeys[0x52] = Key::R;
+		mapKeys[0x53] = Key::S;
+		mapKeys[0x54] = Key::T;
+		mapKeys[0x55] = Key::U;
+		mapKeys[0x56] = Key::V;
+		mapKeys[0x57] = Key::W;
+		mapKeys[0x58] = Key::X;
+		mapKeys[0x59] = Key::Y;
+		mapKeys[0x5A] = Key::Z;
+
+		// Windows doesnt define numeric keys
+		mapKeys[0x30] = Key::K0;
+		mapKeys[0x31] = Key::K1;
+		mapKeys[0x32] = Key::K2;
+		mapKeys[0x33] = Key::K3;
+		mapKeys[0x34] = Key::K4;
+		mapKeys[0x35] = Key::K5;
+		mapKeys[0x36] = Key::K6;
+		mapKeys[0x37] = Key::K7;
+		mapKeys[0x38] = Key::K8;
+		mapKeys[0x39] = Key::K9;
+
+		// Function Keys
+		mapKeys[VK_F1] = Key::F1;
+		mapKeys[VK_F2] = Key::F2;
+		mapKeys[VK_F3] = Key::F3;
+		mapKeys[VK_F4] = Key::F4;
+		mapKeys[VK_F5] = Key::F5;
+		mapKeys[VK_F6] = Key::F6;
+		mapKeys[VK_F7] = Key::F7;
+		mapKeys[VK_F8] = Key::F8;
+		mapKeys[VK_F9] = Key::F9;
+		mapKeys[VK_F10] = Key::F10;
+		mapKeys[VK_F11] = Key::F11;
+		mapKeys[VK_F12] = Key::F12;
+
+		// Arrow Keys
+		mapKeys[VK_DOWN] = Key::DOWN;
+		mapKeys[VK_LEFT] = Key::LEFT;
+		mapKeys[VK_RIGHT] = Key::RIGHT;
+		mapKeys[VK_UP] = Key::UP;
+
+		// Other Keys
+		mapKeys[VK_BACK] = Key::BACK;
+		mapKeys[VK_ESCAPE] = Key::ESCAPE;
+		mapKeys[VK_RETURN] = Key::ENTER;
+		mapKeys[VK_PAUSE] = Key::PAUSE;
+		mapKeys[VK_SCROLL] = Key::SCROLL;
+		mapKeys[VK_TAB] = Key::TAB;
+		mapKeys[VK_DELETE] = Key::DEL;
+		mapKeys[VK_HOME] = Key::HOME;
+		mapKeys[VK_END] = Key::END;
+		mapKeys[VK_PRIOR] = Key::PGUP;
+		mapKeys[VK_NEXT] = Key::PGDN;
+		mapKeys[VK_INSERT] = Key::INS;
+		mapKeys[VK_SHIFT] = Key::SHIFT;
+		mapKeys[VK_CONTROL] = Key::CTRL;
+		mapKeys[VK_SPACE] = Key::SPACE;
+		mapKeys[VK_CAPITAL] = Key::CAPS_LOCK;
+		mapKeys[VK_MENU] = Key::ALT;
+
+		// Numpad
+		mapKeys[VK_NUMPAD0] = Key::NP0;
+		mapKeys[VK_NUMPAD1] = Key::NP1;
+		mapKeys[VK_NUMPAD2] = Key::NP2;
+		mapKeys[VK_NUMPAD3] = Key::NP3;
+		mapKeys[VK_NUMPAD4] = Key::NP4;
+		mapKeys[VK_NUMPAD5] = Key::NP5;
+		mapKeys[VK_NUMPAD6] = Key::NP6;
+		mapKeys[VK_NUMPAD7] = Key::NP7;
+		mapKeys[VK_NUMPAD8] = Key::NP8;
+		mapKeys[VK_NUMPAD9] = Key::NP9;
+		mapKeys[VK_MULTIPLY] = Key::NP_MUL;
+		mapKeys[VK_ADD] = Key::NP_ADD;
+		mapKeys[VK_DIVIDE] = Key::NP_DIV;
+		mapKeys[VK_SUBTRACT] = Key::NP_SUB;
+		mapKeys[VK_DECIMAL] = Key::NP_DECIMAL;
+
+		// OEM Keys
+		mapKeys[VK_OEM_1] = Key::OEM_1;			// On US and UK keyboards this is the ';:' key
+		mapKeys[VK_OEM_2] = Key::OEM_2;			// On US and UK keyboards this is the '/?' key
+		mapKeys[VK_OEM_3] = Key::OEM_3;			// On US keyboard this is the '~' key
+		mapKeys[VK_OEM_4] = Key::OEM_4;			// On US and UK keyboards this is the '[{' key
+		mapKeys[VK_OEM_5] = Key::OEM_5;			// On US keyboard this is '\|' key.
+		mapKeys[VK_OEM_6] = Key::OEM_6;			// On US and UK keyboards this is the ']}' key
+		mapKeys[VK_OEM_7] = Key::OEM_7;			// On US keyboard this is the single/double quote key. On UK, this is the single quote/@ symbol key
+		mapKeys[VK_OEM_8] = Key::OEM_8;			// miscellaneous characters. Varies by keyboard
+		mapKeys[VK_OEM_PLUS] = Key::EQUALS;		// the '+' key on any keyboard
+		mapKeys[VK_OEM_COMMA] = Key::COMMA;		// the comma key on any keyboard
+		mapKeys[VK_OEM_MINUS] = Key::MINUS;		// the minus key on any keyboard
+		mapKeys[VK_OEM_PERIOD] = Key::PERIOD;	// the period key on any keyboard
+	}
+
+	bool Host_Windows_WinAPI::AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen)
+	{
+		olc_IgnoreUnused(bFullScreen);
+
+		// The user created olc::Window object is the SSoT for what a window
+		// should look like, so get that sort of thing from there
+		olc::vi2d vWinPos = vWindowPos;
+		olc::vi2d vWinSize = vWindowSize;
+		
+		hCursorNow = hCursorDefault = LoadCursor(NULL, IDC_ARROW);
+
+		// Define WindowClass
+		WNDCLASSEX wc = { 0 };		
+		wc.cbSize = sizeof(WNDCLASSEX);
+		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+		wc.hCursor = hCursorDefault;
+		wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		wc.hInstance = GetModuleHandle(nullptr);
+		wc.lpfnWndProc = WINAPI_EventHandler;
+		wc.cbClsExtra = 0;
+		wc.cbWndExtra = 0;// sizeof(this); // For static meta-info
+		wc.lpszMenuName = nullptr;
+		wc.hbrBackground = nullptr;
+		wc.lpszClassName = olcT("OLC_PIXEL_GAME_ENGINE3");
+		RegisterClassEx(&wc);
+
+		// Define window furniture
+		DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+		DWORD dwStyle = ConvertPGE2WindowStyle(pWindow);
+
+		olc::vi2d vTopLeft = vWindowPos;
+
+		if (bFullScreen || pPrimaryPGE->config.bFullScreen)
+		{
+			dwExStyle = 0;
+			dwStyle = WS_VISIBLE | WS_POPUP;
+			POINT olc_pt = { vWinPos.x, vWinPos.y };
+			HMONITOR hmon = MonitorFromPoint(olc_pt, MONITOR_DEFAULTTONEAREST);
+			MONITORINFO mi = { sizeof(mi) };
+			if (!GetMonitorInfo(hmon, &mi)) return false;
+			vWinSize = { mi.rcMonitor.right, mi.rcMonitor.bottom };
+			vTopLeft.x = 0;
+			vTopLeft.y = 0;
+		}
+
+
+		// Keep client size as requested
+		RECT rWndRect = { 0, 0, vWinSize.x, vWinSize.y };
+		AdjustWindowRectEx(&rWndRect, dwStyle, FALSE, dwExStyle);
+
+		// +1 Hack to remove black bar between client and title bar for "perfect" window
+		// sizes anyway. This could be DPI related on later windows, but this makes it look
+		// tidier for "normal" applications
+		int width = rWndRect.right - rWndRect.left + 1; 
+		int height = rWndRect.bottom - rWndRect.top;
+
+		// Create the actual OS window, return a handle
+		HWND hWnd = CreateWindowEx(dwExStyle, olcT("OLC_PIXEL_GAME_ENGINE3"), olcT(""), dwStyle,
+			vTopLeft.x, vTopLeft.y, width, height, NULL, NULL, GetModuleHandle(nullptr), this);
+
+		// Update window size to match actual client area given. In situations where the window
+		// is clamped to the desktop, the client area may be smaller than requested.
+		RECT rClient;
+		GetClientRect(hWnd, &rClient);
+		pWindow->SetWindowSize({ rClient.right - rClient.left, rClient.bottom - rClient.top });
+
+		// Hide the close button if the user requested it, but only after styles are applied,
+		if (!pPrimaryPGE->config.bShowWindowCloseButton)
+		{
+			HMENU hMenu = GetSystemMenu(hWnd, FALSE);
+			DeleteMenu(hMenu, SC_CLOSE, MF_BYCOMMAND);
+		}
+
+		LONG_PTR lp = GetWindowLongPtr(hWnd, GWL_STYLE);
+		SetWindowLongPtr(hWnd, GWL_STYLE, lp | (dwStyle));
+		lp = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
+		SetWindowLongPtr(hWnd, GWL_EXSTYLE, lp | (WS_EX_WINDOWEDGE));
+
+		pWindow->olc_OnFocus(true);
+
+		//SetWindowPos(hWnd, NULL, vWinPos.x, vWinPos.y, width, height, SWP_SHOWWINDOW);
+		//ShowWindow(hWnd, 1);
+		//UpdateWindow(hWnd);
+
+		// Now... awkwardly, the above has already fired off some window messages
+		// and they arent necessarily in a consistent order. Whereas one might 
+		// assume WM_CREATE would be the first, there are some others on more
+		// modern systems. This is awkward because we havent yet associated the
+		// source window with a long_ptr to this class, and therefore we can't
+		// call the appropriate event handler.
+
+		// Store the link bewteen host resource and window
+		mapUID2HWND.insert_or_assign(pWindow->GetUID(), hWnd);
+		mapHWND2PTR.insert_or_assign(hWnd, pWindow);
+
+	
+
+
+		//DragAcceptFiles(olc_hWnd, true);
+
+		return true;
+	}
+
+	bool Host_Windows_WinAPI::CloseWindowFrame(olc::Window* pWindow)
+	{
+		DestroyWindow((HWND)GetHostWindowDescriptor(pWindow).front());
+		return false;
+	}
+
+	bool Host_Windows_WinAPI::UpdateWindowFrameTitle(olc::Window* pWindow)
+	{
+#ifdef UNICODE
+		SetWindowText(mapUID2HWND.at(pWindow->GetUID()), ConvertS2W(pWindow->GetWindowTitle()).c_str());
+#else
+		SetWindowText(mapUID2HWND.at(pWindow->GetUID()), pWindow->GetWindowTitle().c_str());
+#endif
+		return true;
+	}
+
+	std::vector<void*> Host_Windows_WinAPI::GetHostWindowDescriptor(olc::Window* pWindow)
+	{
+		return { mapUID2HWND[pWindow->GetUID()] };
+	}
+
+	bool Host_Windows_WinAPI::SyncWithDesktopComposite()
+	{
+		return DwmFlush() == S_OK;
+	}
+
+	bool Host_Windows_WinAPI::SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos)
+	{
+		POINT pt;
+		pt.x = vPos.x;
+		pt.y = vPos.y;
+		ClientToScreen(mapUID2HWND.at(pWindow->GetUID()), &pt);
+		SetCursorPos(pt.x, pt.y);
+		return true;
+	}
+
+	bool Host_Windows_WinAPI::SetMouseVisible(olc::Window* pWindow, const bool bVisible)
+	{
+		olc_IgnoreUnused(pWindow);
+
+		hCursorNow = bVisible ? hCursorDefault : NULL;
+
+		// Fire fake move event to update cursor visibility immediately
+		POINT p;
+		GetCursorPos(&p);
+		SetCursorPos(p.x, p.y + 1);
+		SetCursorPos(p.x, p.y);
+		return true;
+	}
+
+	bool Host_Windows_WinAPI::SetFullScreen(olc::Window* pWindow, const bool bFullScreen)
+	{
+		HWND hWnd = mapUID2HWND.at(pWindow->GetUID());
+
+		if (bFullScreen)
+		{
+			// Maximise, make on top, remove border and titlebar
+			SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+			SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
+			ShowWindow(hWnd, SW_MAXIMIZE);
+		}
+		else
+		{
+			// Restore original window style and position
+			DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+			// Get the style we should have based on the window config
+			DWORD dwStyle = ConvertPGE2WindowStyle(pWindow);
+
+			LONG_PTR lp = GetWindowLongPtr(hWnd, GWL_STYLE);
+			SetWindowLongPtr(hWnd, GWL_STYLE, lp | dwStyle);
+			lp = GetWindowLongPtr(hWnd, GWL_EXSTYLE);
+			SetWindowLongPtr(hWnd, GWL_EXSTYLE, lp | dwExStyle);
+			ShowWindow(hWnd, SW_NORMAL);
+		}
+
+		UpdateWindow(hWnd);
+		SetForegroundWindow(hWnd);
+		SetFocus(hWnd);
+		SetActiveWindow(hWnd);
+		return true;
+	}
+
+	DWORD Host_Windows_WinAPI::ConvertPGE2WindowStyle(const olc::Window* pWindow)
+	{
+		olc_IgnoreUnused(pWindow);
+
+		DWORD dwStyle = WS_OVERLAPPED | WS_VISIBLE; // Default style for CreateWindowEx
+
+		// Note for Microsoft: if you hide the border, it hides the title bar too, and via versa
+
+		// For fullscreen,borderless/noTitlebar we want to skip all the window furniture and just have a big ol canvas
+		if (!pPrimaryPGE->config.bShowWindowBorder || !pPrimaryPGE->config.bShowWindowTilebar) return dwStyle |= WS_POPUP;
+
+		// If any max/min/close button(s) display the button menu
+		if (pPrimaryPGE->config.bShowWindowCloseButton || pPrimaryPGE->config.bShowWindowMaximiseButton || pPrimaryPGE->config.bShowWindowMinimiseButton) dwStyle |= WS_SYSMENU;
+		if (pPrimaryPGE->config.bShowWindowTilebar)			dwStyle |= WS_CAPTION;		// Add a title bar
+		if (pPrimaryPGE->config.bShowWindowBorder)			dwStyle |= WS_BORDER;		// Add a border
+		if (pPrimaryPGE->config.bResizeable)				dwStyle |= WS_THICKFRAME;	// Enable resizing
+		if (pPrimaryPGE->config.bShowWindowMinimiseButton)	dwStyle |= WS_MINIMIZEBOX;	// Add Min Button
+		if (pPrimaryPGE->config.bShowWindowMaximiseButton)	dwStyle |= WS_MAXIMIZEBOX;	// Add Max Button
+
+		// Note: Close button is handled after dwStlyes are applied
+
+		return dwStyle;
+
+
+	}
+		
+	LRESULT Host_Windows_WinAPI::OnWindowEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		if (!mapHWND2PTR.contains(hWnd))
+			return DefWindowProc(hWnd, uMsg, wParam, lParam);;
+
+		// Get target olc::Window
+		const auto& window = mapHWND2PTR.at(hWnd);
+
+		// Many WinAPI events are literally ancient these days, so need some interpretation
+		// to get to the useful data.
+
+		switch (uMsg)
+		{
+		case WM_MOUSEMOVE: // Mouse has moved within a window
+			{
+				// Extract mouse X & Y
+				uint16_t x = uint16_t(lParam & 0xFFFF); 
+				uint16_t y = uint16_t((lParam >> 16) & 0xFFFF);
+				int16_t ix = *(int16_t*)&x;   
+				int16_t iy = *(int16_t*)&y;
+				// Tell window new mouse location
+				window->olc_OnMouseMove(olc::vi2d{ ix, iy });
+				break;
+			}
+		
+
+			//		case WM_MOVE:       vWinPos = olc::vi2d(lParam & 0xFFFF, (lParam >> 16) & 0xFFFF);  ptrPGE->olc_UpdateWindowPos(lParam & 0xFFFF, (lParam >> 16) & 0xFFFF);	return 0;
+		case WM_SIZE:
+			{				
+				window->olc_OnWindowSize(olc::vi2d(lParam & 0xFFFF, (lParam >> 16) & 0xFFFF));
+				break;
+			}
+
+		case WM_MOUSEWHEEL:
+			{
+				window->olc_OnMouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
+				break;
+			}
+
+		case WM_ACTIVATE:
+			{
+				window->olc_OnFocus((LOWORD(wParam) != WA_INACTIVE));
+				return 0;
+			}
+
+    	case WM_MOUSEACTIVATE:
+			{
+				window->olc_OnFocus(true);
+				return MA_ACTIVATE;
+			}
+        
+		case WM_SETFOCUS:
+			{
+				window->olc_OnFocus(true);
+				return 0;
+			}
+
+		case WM_KILLFOCUS:
+			{
+				window->olc_OnFocus(false);
+				return 0;
+			}
+
+		case WM_KEYDOWN:
+			{
+				window->olc_OnFocus(true);
+				if (mapKeys.contains(int32_t(wParam)))
+				{
+					window->olc_OnKeyPress(mapKeys[int32_t(wParam)], true);
+				}
+				break;
+			}
+
+		case WM_KEYUP:
+			{
+				if (mapKeys.contains(int32_t(wParam)))
+				{
+					window->olc_OnKeyPress(mapKeys[int32_t(wParam)], false);
+				}
+				break;
+			}
+
+		case WM_SYSKEYDOWN:
+		{
+			if (mapKeys.contains(int32_t(wParam)))
+			{
+				window->olc_OnKeyPress(mapKeys[int32_t(wParam)], true);
+			}
+			break;
+		}
+
+		case WM_SYSKEYUP:
+		{
+			if (mapKeys.contains(int32_t(wParam)))
+			{
+				window->olc_OnKeyPress(mapKeys[int32_t(wParam)], false);
+			}
+			break;
+		}
+
+		case WM_LBUTTONDOWN:
+			{
+				window->olc_OnMouseButton(0, true);
+				break;
+			}
+		case WM_LBUTTONUP:
+			{
+				window->olc_OnMouseButton(0, false);
+				break;
+			}
+		case WM_RBUTTONDOWN:
+			{
+				window->olc_OnMouseButton(1, true);
+				break;
+			}
+		case WM_RBUTTONUP:
+			{
+				window->olc_OnMouseButton(1, false);
+				break;
+			}
+		case WM_MBUTTONDOWN:
+			{
+				window->olc_OnMouseButton(2, true);
+				break;
+			}
+		case WM_MBUTTONUP:
+			{
+				window->olc_OnMouseButton(2, false);
+				break;
+			}
+		case WM_XBUTTONDOWN:
+			{
+				UINT button = GET_XBUTTON_WPARAM(wParam);
+				if(button == XBUTTON1)
+				{
+					window->olc_OnMouseButton(3, true);
+				}
+				else if(button == XBUTTON2)
+				{
+					window->olc_OnMouseButton(4, true);
+				}
+				
+				break;
+			}
+		case WM_XBUTTONUP:
+			{
+				UINT button = GET_XBUTTON_WPARAM(wParam);
+				if(button == XBUTTON1)
+				{
+					window->olc_OnMouseButton(3, false);
+				}
+				else if(button == XBUTTON2)
+				{
+					window->olc_OnMouseButton(4, false);
+				}
+				
+				break;
+			}
+
+		case WM_POINTERDOWN:
+			{
+				POINTER_INPUT_TYPE pointerType;
+				if (GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerType))
+				{
+					if (pointerType == PT_TOUCH)
+					{
+						POINTER_TOUCH_INFO touchInfo;
+						if (GetPointerTouchInfo(GET_POINTERID_WPARAM(wParam), &touchInfo))
+						{
+							POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+							ScreenToClient(hWnd, &pt);
+							window->olc_OnTouch(
+								GET_POINTERID_WPARAM(wParam),
+								olc::vf2d{ float(pt.x), float(pt.y) },
+								true,
+								false,
+								olc::vf2d{ float(touchInfo.rcContact.right - touchInfo.rcContact.left), float(touchInfo.rcContact.bottom - touchInfo.rcContact.top) });
+						}
+					}
+					else if (pointerType == PT_PEN)
+					{
+						POINTER_PEN_INFO penInfo;
+						if (GetPointerPenInfo(GET_POINTERID_WPARAM(wParam), &penInfo))
+						{
+							POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+							ScreenToClient(hWnd, &pt);
+							window->olc_OnTouch(
+								GET_POINTERID_WPARAM(wParam),
+								olc::vf2d{ float(pt.x), float(pt.y) },
+								true,
+								false,
+								{ 1,1 },
+								true,
+								float(penInfo.pressure) / 1024.0f,
+								float(penInfo.rotation) / 360.0f * 2.0f * 3.14159265f,
+								{ float(penInfo.tiltX) , float(penInfo.tiltY) }
+							);
+						}
+					}
+					
+				}
+
+				break;
+			}
+
+		case WM_POINTERUP:
+		{
+			POINTER_INPUT_TYPE pointerType;
+			if (GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerType))
+			{
+				if (pointerType == PT_TOUCH)
+				{
+					POINTER_TOUCH_INFO touchInfo;
+					if (GetPointerTouchInfo(GET_POINTERID_WPARAM(wParam), &touchInfo))
+					{
+						POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+						ScreenToClient(hWnd, &pt);
+						window->olc_OnTouch(
+							GET_POINTERID_WPARAM(wParam),
+							olc::vf2d{ float(pt.x), float(pt.y) },
+							false,
+							true,
+							olc::vf2d{ float(touchInfo.rcContact.right - touchInfo.rcContact.left), float(touchInfo.rcContact.bottom - touchInfo.rcContact.top) });
+					}
+				}
+				else if (pointerType == PT_PEN)
+				{
+					POINTER_PEN_INFO penInfo;
+					if (GetPointerPenInfo(GET_POINTERID_WPARAM(wParam), &penInfo))
+					{
+						POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+						ScreenToClient(hWnd, &pt);
+						window->olc_OnTouch(
+							GET_POINTERID_WPARAM(wParam),
+							olc::vf2d{ float(pt.x), float(pt.y) },
+							false,
+							true,
+							{ 1,1 },
+							true,
+							float(penInfo.pressure) / 1024.0f,
+							float(penInfo.rotation) / 360.0f * 2.0f * 3.14159265f,
+							{ float(penInfo.tiltX) , float(penInfo.tiltY) }
+						);
+					}
+				}
+			}
+
+			break;
+		}
+
+		case WM_POINTERUPDATE:
+		{
+			POINTER_INPUT_TYPE pointerType;
+			if (GetPointerType(GET_POINTERID_WPARAM(wParam), &pointerType))
+			{
+				if (pointerType == PT_TOUCH)
+				{
+					POINTER_TOUCH_INFO touchInfo;
+					if (GetPointerTouchInfo(GET_POINTERID_WPARAM(wParam), &touchInfo))
+					{
+						POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+						ScreenToClient(hWnd, &pt);
+						window->olc_OnTouch(
+							GET_POINTERID_WPARAM(wParam),
+							olc::vf2d{ float(pt.x), float(pt.y) },
+							false,
+							false,
+							olc::vf2d{ float(touchInfo.rcContact.right - touchInfo.rcContact.left), float(touchInfo.rcContact.bottom - touchInfo.rcContact.top) });
+					}
+				}
+				else if (pointerType == PT_PEN)
+				{
+					if (IS_POINTER_INCONTACT_WPARAM(wParam))
+					{
+						POINTER_PEN_INFO penInfo;
+						if (GetPointerPenInfo(GET_POINTERID_WPARAM(wParam), &penInfo))
+						{
+							POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+							ScreenToClient(hWnd, &pt);
+							window->olc_OnTouch(
+								GET_POINTERID_WPARAM(wParam),
+								olc::vf2d{ float(pt.x), float(pt.y) },
+								false,
+								false,
+								{ 1,1 },
+								true,
+								float(penInfo.pressure) / 1024.0f,
+								float(penInfo.rotation) / 360.0f * 2.0f * 3.14159265f,
+								{ float(penInfo.tiltX) , float(penInfo.tiltY) }
+							);
+						}
+					}
+				}
+			}	
+			break;
+		}
+
+
+			//		case WM_DROPFILES:
+			//		{
+			//			// This is all eww...
+			//			HDROP drop = (HDROP)wParam;
+			//			
+			//			uint32_t nFiles = DragQueryFile(drop, 0xFFFFFFFF, nullptr, 0);
+			//			std::vector<std::string> vFiles;
+			//			for (uint32_t i = 0; i < nFiles; i++)
+			//			{
+			//				TCHAR dfbuffer[256]{};
+			//				uint32_t len = DragQueryFile(drop, i, nullptr, 0);
+			//				DragQueryFile(drop, i, dfbuffer, 256);
+			//#ifdef UNICODE
+			//#ifdef __MINGW32__
+			//				char* buffer = new char[len + 1];
+			//				wcstombs(buffer, dfbuffer, len);
+			//				buffer[len] = '\0';
+			//#else
+			//				int count = WideCharToMultiByte(CP_UTF8, 0, dfbuffer, -1, NULL, 0, NULL, NULL);
+			//				char* buffer = new char[count];
+			//				WideCharToMultiByte(CP_UTF8, 0, dfbuffer, -1, buffer, count, NULL, NULL);
+			//#endif				
+			//				vFiles.push_back(std::string(buffer));
+			//				delete[] buffer;
+			//#else
+			//				vFiles.push_back(std::string(dfbuffer));
+			//#endif
+			//			}
+			//			
+			//			// Even more eww...
+			//			POINT p; DragQueryPoint(drop, &p);
+			//			ptrPGE->olc_DropFiles(p.x, p.y, vFiles);
+			//			DragFinish(drop);
+			//			return 0;
+			//		}
+			//		break;
+			//			
+			//			
+		case WM_CLOSE:
+			{
+				window->olc_OnWindowClose();
+				break;
+				//return DefWindowProc(hWnd, uMsg, wParam, lParam);
+			}
+
+			case WM_SETCURSOR:
+			{
+				if (LOWORD(lParam) == HTCLIENT)
+				{
+					SetCursor(hCursorNow);
+					return TRUE; // Sigh ffs microsoft...
+				}
+
+				break;
+			}
+
+		case WM_DESTROY:	
+			PostQuitMessage(0); 
+			DestroyWindow(hWnd);
+
+		}
+
+
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
+	olc::KeyboardLayout Host_Windows_WinAPI::GetKeyboardLayout() const
+	{
+		HKL kbl = ::GetKeyboardLayout(0);
+		size_t highWord = ((size_t)kbl >> 16) & 0xFFFF;
+
+		if (highWord == 0x00000409) // US
+			return olc::KeyboardLayout::QWERTY_US;
+		else if(highWord == 0x00000809) // UK
+			return olc::KeyboardLayout::QWERTY_UK;
+		else if(highWord == 0x00000407) // DE
+			return olc::KeyboardLayout::QWERTZ;
+		else if(highWord == 0x0000040C) // FR
+			return olc::KeyboardLayout::AZERTY;
+
+		return OLC_DEFAULT_KEYBOARD_LAYOUT;
+	}
+
+};
+#endif
+
+#if OLC_HOST == OLC_HOST_MACOS
+namespace olc::host {
+
+
+    // NSEventModifierFlags values
+    // constexpr unsigned int NSEventModifierNoFlags        = 1 << 8;  // 0x100     // Temp remove unused variable warning
+    // constexpr unsigned int NSEventModifierFlagCapsLock   = 1 << 16; // 0x10000   // Temp remove unused variable warning
+    constexpr unsigned int NSEventModifierFlagShift      = 1 << 17; // 0x20000
+    constexpr unsigned int NSEventModifierFlagControl    = 1 << 18; // 0x40000
+    // constexpr unsigned int NSEventModifierFlagOption     = 1 << 19; // 0x80000   // Temp remove unused variable warning
+    constexpr unsigned int NSEventModifierFlagCommand    = 1 << 20; // 0x100000
+    // constexpr unsigned int NSEventModifierFlagNumericPad = 1 << 21; // 0x200000  // Temp remove unused variable warning
+    // constexpr unsigned int NSEventModifierFlagHelp       = 1 << 22; // 0x400000  // Temp remove unused variable warning
+    // constexpr unsigned int NSEventModifierFlagFunction   = 1 << 23; // 0x800000  // Temp remove unused variable warning
+
+    // enum for window appearance and behavior bit flags
+    enum class NSWindowStyleMask : uint16_t {
+        Titled                   = (1 << 0),     // Window has a title bar
+        Closable                 = (1 << 1),     // Window can be closed
+        Miniaturizable           = (1 << 2),     // Window can be minimized
+        Resizable                = (1 << 3),     // Window can be resized
+        UtilityWindow            = (1 << 4),     // Utility window style
+        DocModalWindow           = (1 << 6),     // Document-modal window
+        NonactivatingPanel       = (1 << 7),     // Non-activating panel
+        TexturedBackground       = (1 << 8),     // Textured background
+        HUDWindow                = (1 << 13),    // Heads-up display window
+        UnifiedTitleAndToolbar   = (1 << 12),    // Unified title and toolbar
+        FullScreen               = (1 << 14),    // Full-screen window
+        FullSizeContentView      = (1 << 15)     // Full-size content view
+    };
+
+
+    Host_Apple_MacOS::Host_Apple_MacOS()
+    {
+         // Reference: https://eastmanreference.com/complete-list-of-applescript-key-codes
+        mapKeys[0x00] = Key::NONE;
+
+        // Map macOS key codes to olc::Key codes
+        mapKeys[0] = Key::A;
+        mapKeys[11] = Key::B;
+        mapKeys[8] = Key::C;
+        mapKeys[2] = Key::D;
+        mapKeys[14] = Key::E;
+        mapKeys[3] = Key::F;
+        mapKeys[5] = Key::G;
+        mapKeys[4] = Key::H;
+        mapKeys[34] = Key::I;
+        mapKeys[38] = Key::J;
+        mapKeys[40] = Key::K;
+        mapKeys[37] = Key::L;
+        mapKeys[46] = Key::M;
+        mapKeys[45] = Key::N;
+        mapKeys[31] = Key::O;
+        mapKeys[35] = Key::P;
+        mapKeys[12] = Key::Q;
+        mapKeys[15] = Key::R;
+        mapKeys[1] = Key::S;
+        mapKeys[17] = Key::T;
+        mapKeys[32] = Key::U;
+        mapKeys[9] = Key::V;
+        mapKeys[13] = Key::W;
+        mapKeys[7] = Key::X;
+        mapKeys[16] = Key::Y;
+        mapKeys[6] = Key::Z;
+
+        // Numeric keys
+        mapKeys[29] = Key::K0;
+        mapKeys[18] = Key::K1;
+        mapKeys[19] = Key::K2;
+        mapKeys[20] = Key::K3;
+        mapKeys[21] = Key::K4;
+        mapKeys[23] = Key::K5;
+        mapKeys[22] = Key::K6;
+        mapKeys[26] = Key::K7;
+        mapKeys[28] = Key::K8;
+        mapKeys[25] = Key::K9;
+
+        // Function Keys
+        mapKeys[122] = Key::F1;
+        mapKeys[120] = Key::F2;
+        mapKeys[99] = Key::F3;
+        mapKeys[118] = Key::F4;
+        mapKeys[96] = Key::F5;
+        mapKeys[97] = Key::F6;
+        mapKeys[98] = Key::F7;
+        mapKeys[100] = Key::F8;
+        mapKeys[101] = Key::F9;
+        mapKeys[109] = Key::F10;
+        mapKeys[103] = Key::F11;
+        mapKeys[111] = Key::F12;
+
+        // Arrow Keys
+        mapKeys[125] = Key::DOWN; 
+        mapKeys[123] = Key::LEFT;
+        mapKeys[124] = Key::RIGHT;
+        mapKeys[126] = Key::UP;
+
+        // Other Keys
+        mapKeys[51] = Key::BACK;        // Delete (Backspace)
+        mapKeys[53] = Key::ESCAPE;      // Escape
+        mapKeys[36] = Key::ENTER;       // Return
+        mapKeys[113] = Key::PAUSE;      // F16 (often used as pause)
+        mapKeys[107] = Key::SCROLL;     // F14 (scroll lock equivalent)
+        mapKeys[48] = Key::TAB;         // Tab
+        mapKeys[117] = Key::DEL;        // Forward Delete
+        mapKeys[115] = Key::HOME;       // Home
+        mapKeys[119] = Key::END;        // End
+        mapKeys[116] = Key::PGUP;       // Page Up
+        mapKeys[121] = Key::PGDN;       // Page Down
+        mapKeys[114] = Key::INS;        // Help (Insert equivalent)
+        mapKeys[56] = Key::SHIFT;       // Left Shift
+        mapKeys[59] = Key::CTRL;        // Left Control
+        mapKeys[49] = Key::SPACE;       // Space
+        mapKeys[57] = Key::CAPS_LOCK;   // Caps Lock
+
+        // Numpad
+        mapKeys[82] = Key::NP0;
+        mapKeys[83] = Key::NP1;
+        mapKeys[84] = Key::NP2;
+        mapKeys[85] = Key::NP3;
+        mapKeys[86] = Key::NP4;
+        mapKeys[87] = Key::NP5;
+        mapKeys[88] = Key::NP6;
+        mapKeys[89] = Key::NP7;
+        mapKeys[91] = Key::NP8;
+        mapKeys[92] = Key::NP9;
+        mapKeys[67] = Key::NP_MUL;      // Numpad *
+        mapKeys[69] = Key::NP_ADD;      // Numpad +
+        mapKeys[75] = Key::NP_DIV;      // Numpad /
+        mapKeys[78] = Key::NP_SUB;      // Numpad -
+        mapKeys[65] = Key::NP_DECIMAL;  // Numpad .
+
+        // Symbol Keys (OEM equivalents)
+        mapKeys[41] = Key::OEM_1;       // On US and UK keyboards this is the ';:' key
+        mapKeys[44] = Key::OEM_2;       // On US and UK keyboards this is the '/?' key
+        mapKeys[50] = Key::OEM_3;       // On US and UK keyboards this is the '`~' key (Grave accent `)
+        mapKeys[33] = Key::OEM_4;       // On US and UK keyboards this is the '[{' key
+        mapKeys[42] = Key::OEM_5;       // On US keyboard this is '\|' key. 
+        mapKeys[30] = Key::OEM_6;       // On US and UK keyboards this is the ']}' key
+        mapKeys[39] = Key::OEM_7;       // On US keyboard this is the single/double quote key. On UK, this is the single quote/@ symbol key
+        mapKeys[10] = Key::OEM_8;       // Section sign § (varies by keyboard)
+        mapKeys[24] = Key::EQUALS;      // Equal sign =
+        mapKeys[43] = Key::COMMA;       // Comma ,
+        mapKeys[27] = Key::MINUS;       // Minus -
+        mapKeys[47] = Key::PERIOD;      // Period .
+
+    }
+
+
+    bool Host_Apple_MacOS::AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen){
+        olc_IgnoreUnused(bFullScreen);
+        pPGEwindow = pWindow;
+        pPGEwindow->SetWindowPosition(vWindowPos);
+        pPGEwindow->SetWindowSize(vWindowSize);
+        pPGEwindow->LinkToHost(this);
+
+        frameBounds.x = 0.0;
+        frameBounds.y = 0.0;
+        frameBounds.width = static_cast<double>(vWindowSize.x);
+        frameBounds.height = static_cast<double>(vWindowSize.y);
+        
+        return true;
+    }
+
+    bool Host_Apple_MacOS::CloseWindowFrame(olc::Window* pWindow){
+        pWindow->olc_OnWindowClose();
+        return true;
+    }
+
+    bool Host_Apple_MacOS::UpdateWindowFrameTitle(olc::Window* pWindow){
+        if (!pMacOSWindow) return false;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            pMacOSWindow->setTitle(pWindow->GetWindowTitle().c_str());
+        });
+        return true;
+    }
+
+    std::vector<void*> Host_Apple_MacOS::GetHostWindowDescriptor(olc::Window* pWindow){
+        olc_IgnoreUnused(pWindow);
+        // Ensure OpenGL renderer is created
+        if(pMacOSOpenGLRenderer == nullptr)
+            CreateCGLContextObj();
+
+        return vMacOSWindowDescriptors;
+       
+    }
+
+
+    bool Host_Apple_MacOS::SyncWithDesktopComposite()
+    {
+        /*
+         core.h SyncWithDesktopComposite is only called when vSync is enabled on each frame,
+         the method of enabling vSync varies between platforms, For macos we use a local var enableVSync,
+         set to false and toggle it on first call, so that vSync is only enabled once
+         */
+        
+        if(!enableVSync)
+        {
+            pMacOSOpenGLRenderer->enableVsync();
+            enableVSync = true;
+        }
+        
+        return enableVSync;
+    }
+
+    bool Host_Apple_MacOS::SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos)
+    {
+        olc_IgnoreUnused(pWindow);
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            pMacOSWindow->setCursorPosition(vPos.x, vPos.y);
+        });
+        return false;
+    }
+
+    bool Host_Apple_MacOS::SetMouseVisible(olc::Window* pWindow, const bool bVisible)
+    {
+        olc_IgnoreUnused(pWindow);
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            pMacOSWindow->setCursorVisibility(bVisible);
+        });
+        return true;
+    }
+
+    bool Host_Apple_MacOS::SetFullScreen(olc::Window* pWindow, const bool bFullScreen)
+    {
+        olc_IgnoreUnused(pWindow);
+        // if we're already in the specified state, return early
+        if(pMacOSWindow->isFullScreen() == bFullScreen)
+            return true;
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            pMacOSWindow->toggleFullScreen();
+        });
+        return true;
+    }
+
+    uint16_t Host_Apple_MacOS::ConvertPGE2WindowStyle()
+    {
+        uint16_t nsStyle = 0;
+        
+        // Note for MacOS: You cannot fully hide both the title bar and border, therefore we return titled when both are disabled, which is the closest we can get to a borderless window
+        if (!pPrimaryPGE->config.bShowWindowBorder || !pPrimaryPGE->config.bShowWindowTilebar) return static_cast<unsigned int>(NSWindowStyleMask::Titled);
+
+        // On MacOS, the maximize button is tied to the resizable style, therefore there is no need to implemenent a separate bShowWindowMaximiseButton config,
+        // For MacOS you can only disable the buttons, you can't hide them
+        if (pPrimaryPGE->config.bFullScreen)               nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::FullSizeContentView);      // Fullscreen window
+        if (pPrimaryPGE->config.bShowWindowTilebar)        nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Titled);          // Add a title bar
+        if (pPrimaryPGE->config.bShowWindowBorder)         nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Titled);          // Add a border
+        if (pPrimaryPGE->config.bResizeable)               nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Resizable);       // Enable resizing
+        if (pPrimaryPGE->config.bShowWindowMinimiseButton) nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Miniaturizable);  // Add Min Button
+        if (pPrimaryPGE->config.bShowWindowCloseButton)    nsStyle |= static_cast<unsigned int>(NSWindowStyleMask::Closable);        // Add Close Button
+
+        return nsStyle;
+        
+    }
+
+    bool Host_Apple_MacOS::OnApplicationStart(olc::PixelGameEngine* pPrimary){
+        pPrimaryPGE = pPrimary;
+        return true;
+    }
+
+    bool Host_Apple_MacOS::StartSystem(){
+                
+        // Create MacOS Application instance
+        pMacApplication = std::make_unique<olc::apis::macos::Application>();
+
+        // Set up application delegate event handlers
+        MacApplicationEventsHandler();
+
+        // Initialize and activate application first
+        pMacApplication->initialize();
+        pMacApplication->activate();
+        
+        // Pre-context start hook
+        pPrimaryPGE->OnPreContextStart();
+        
+        // Initialize the MacOS Window
+        pMacOSWindow = std::make_unique<olc::apis::macos::Window>(frameBounds.width, frameBounds.height, "OLC PGE 3 MacOS Demo");
+        pMacOSWindow->setPosition(frameBounds.x, frameBounds.y);
+        pMacOSWindow->setContentViewPosition(0, 0);
+        
+        // Set up window event handlers
+        MacWindowEventsHandler();
+        
+        // Create Input Event handler
+        pMacOSEventHandler = std::make_unique<olc::apis::macos::EventHandler>(*pMacOSWindow);
+            
+        // Setup Event handlers
+        MacEventsHandler();
+        
+        // Create the window
+        unsigned long styleMask = ConvertPGE2WindowStyle();
+        pMacOSWindow->show(styleMask);
+        pMacOSEventHandler->enable();
+        
+        //--- Start up our engine threading system ----
+        // Start the PGE context on the main thread
+        // Mark system as active
+        systemActive = true;
+
+        // Create system thread - handles gpu context
+        std::thread threadSystem([this]()
+        {
+            // Notify start of system thread
+            if (!this->OnSystemThreadStart())
+            {
+                // PGE->OnContextStart() failed, or user aborted OnUserCreate()
+                return;
+            }
+
+            // Main system loop
+            while (systemActive)
+            {
+                // Perform primary window update
+                if (!this->OnSystemTick())
+                {
+                    StopSystem();
+                }
+            }
+
+            // Notify end of system thread
+            if (!this->OnSystemThreadEnd())
+            {
+                // PGE->OnContextEnd() failed
+                return;
+            }
+        });
+
+        
+        // Start the main event loop (this will block)
+        pMacApplication->run();
+                
+        // Once the application run loop ends, join the system thread
+        if(threadSystem.joinable())
+            threadSystem.join();
+
+        // Post-context end hook
+        return pPrimaryPGE->OnPostContextEnd();
+
+    }
+
+    bool Host_Apple_MacOS::StopSystem()
+    {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            // clean up and close application
+            if (pMacOSOpenGLRenderer)
+            {
+                pMacOSOpenGLRenderer->destoryContext();
+                pMacOSOpenGLRenderer = nullptr;
+            }
+            if (pMacOSWindow)
+            {
+                pMacOSWindow->destoryWindow();
+                pMacOSWindow = nullptr;
+            }
+            if (pMacApplication)
+            {
+                pMacApplication->stop();
+            }
+
+        });
+        systemActive = false;
+        return true;
+    }
+
+    bool Host_Apple_MacOS::OnSystemThreadStart()
+    {
+        // Hold back threading until application is fully initialized
+        bSkipFrame = ExecutePendingMainThreadTasks();
+        return pPrimaryPGE->OnContextStart();
+    }
+
+    bool Host_Apple_MacOS::OnSystemTick()
+    {
+        // Execute any pending main thread tasks
+        bSkipFrame = ExecutePendingMainThreadTasks();
+        return pPrimaryPGE->OnContextTick();
+    }
+
+    bool Host_Apple_MacOS::OnSystemThreadEnd()
+    {
+        return pPrimaryPGE->OnContextEnd();
+    }
+
+    bool Host_Apple_MacOS::OnApplicationEnd()
+    {
+        return true;
+    }
+
+
+//-- OS Window Event Handling -----
+   
+    olc::KeyboardLayout Host_Apple_MacOS::GetKeyboardLayout() const
+    {
+        // Get system locale from MacOS Application
+        // We need to wait until the application has launched to get the keyboard layout
+        // Therefore this function is called again from setDidFinishLaunchingCallback event
+        if (pMacApplication)
+        {
+            std::string locale = pMacApplication->getSystemLocale();
+            if (locale == "en_GB")
+            {
+                return olc::KeyboardLayout::QWERTY_UK;
+            }
+            else if (locale == "en_US")
+            {
+                return olc::KeyboardLayout::QWERTY_US;
+            }
+            else if (locale == "fr_FR")
+            {
+                return olc::KeyboardLayout::AZERTY;
+            }
+            else if (locale == "de_DE")
+            {
+                return olc::KeyboardLayout::QWERTZ;
+            }
+        }
+        // Default to QWERTY if unknown
+        return olc::KeyboardLayout::QWERTY_UK;
+    }   
+
+// ------- Priavate Main Thread Task Handling for MacOS Host -------
+
+    bool Host_Apple_MacOS::CreateCGLContextObj()
+    {
+        // This method should only be called on the PGE thread, use AddPendingMainThreadTask(CREATE_OPENGL_RENDERER); to queue it if needed
+        if(pMacOSOpenGLRenderer == nullptr)
+        {
+           vMacOSWindowDescriptors.clear(); // ensure we are starting fresh
+           pMacOSOpenGLRenderer = std::make_shared<olc::apis::macos::OpenGLRenderer>();
+           
+           dispatch_sync(dispatch_get_main_queue(), ^{
+                // Edge case for when the window is auto resize due to MacOS clamping to screen size
+               pMacOSWindow->getContentViewSize(frameBounds.width, frameBounds.height);
+               pPGEwindow->olc_OnWindowSize({static_cast<int>(frameBounds.width), static_cast<int>(frameBounds.height)});
+
+               pMacOSOpenGLRenderer->attachToWindow(*pMacOSWindow);
+               pMacOSOpenGLRenderer->setupContext();
+           });
+           
+           pMacGLConextObj = pMacOSOpenGLRenderer->getCGLContextObj();
+           
+           pMacOSOpenGLRenderer->setVsync(false);
+           
+           vMacOSWindowDescriptors.push_back(pMacGLConextObj); // Pointer to CGLContextObj
+           vMacOSWindowDescriptors.push_back(&bSkipFrame);     // Pointer to skip frame flag
+
+            // Set up OpenGL renderer for visual feedback
+           pMacOSOpenGLRenderer->makeCurrentContext();
+            
+            // Finally we set full screen if needed to ensure all out OpenGL setup is done before toggling full screen,
+            if(pPrimaryPGE->config.bFullScreen){
+                SetFullScreen(pPGEwindow, true);
+            }
+           
+        }
+        
+        return true;
+    }
+
+    bool Host_Apple_MacOS::ExecutePendingMainThreadTasks()
+    {
+        // 1: Check if main thread wants us to wait
+        std::unique_lock<std::mutex> lock(pgeThreadPendingTasksMutex);
+        
+        if (isPGEThreadResetting.load()) {
+            
+            // 2. PGE Thread signals it's waiting
+            {
+                std::lock_guard<std::mutex> mainLock(mainThreadPendingTasksMutex);
+                isMainThreadResetting = true;  // Signal to main thread we're waiting
+            }
+            mainThreadResetCondition.notify_all();  // Wake up main thread
+
+            // Note: MainThreadTasks(); will be called by the main thread to process tasks
+            
+            // 3. PGE Thread waits for main thread to finish
+            pgeThreadResetCondition.wait(lock, [this] { 
+                return !isPGEThreadResetting.load(); 
+            });
+
+            //4: return true indicating we processed tasks
+            return true;
+        }
+        else
+        {
+            // No pending tasks, just return
+            return false;
+        }
+    }
+
+    bool Host_Apple_MacOS::AddPendingMainThreadTask(MAINTASKS task)
+    {
+        // NOTE: Note: You should only add tasks that require main thread execution
+        vPendingMainThreadTasks.push_back(task);
+        MainThreadTasks();
+            
+        return true;
+    }
+    
+    bool Host_Apple_MacOS::MainThreadTasks()
+    {
+        bool res = false;
+        if(vPendingMainThreadTasks.empty())
+            return res;         // edge case
+        
+        // 1. Main Thread locks PGE Thread
+        {
+            std::lock_guard<std::mutex> lock(pgeThreadPendingTasksMutex);
+            isPGEThreadResetting = true;  // Signal PGE to stop
+        }
+        pgeThreadResetCondition.notify_all();  // Wake up PGE thread to check flag
+        
+        // 2. Main Thread waits for PGE Thread to acknowledge and wait
+        std::unique_lock<std::mutex> lock(mainThreadPendingTasksMutex);
+        mainThreadResetCondition.wait(lock, [this] {
+            return isMainThreadResetting.load(); // Wait until PGE signals it's waiting
+        });
+        
+        // Process any pending main thread tasks
+        for (const auto& task : vPendingMainThreadTasks)
+        {
+            switch (task)
+            {
+                case CREATE_OPENGL_RENDERER:
+                {
+                    // In this case, the PGE will be waiting for main thread to singal, so the ContextOBJ can be created
+                    res = false; // No need to skip frame
+                    break;
+                }
+                case RESIZE_WINDOW:
+                {
+                    // Resize window on main thread
+                    pMacOSWindow->getContentViewSize(frameBounds.width, frameBounds.height);
+                    pPGEwindow->olc_OnWindowSize({static_cast<int>(frameBounds.width), static_cast<int>(frameBounds.height)});
+                    pMacOSOpenGLRenderer->resetContextSize(frameBounds.width, frameBounds.height);
+                    res = true; // Skip frame to allow resize to take effect
+                    break;
+                }
+                case DEMINIMIZE_WINDOW:
+                case BECOME_ACTIVE:
+                {
+                    pPGEwindow->olc_OnFocus(true);
+                    break;
+                }
+                case MINIMIZE_WINDOW:
+                case RESIGN_ACTIVE:
+                {
+                    pPGEwindow->olc_OnFocus(false);
+                    break;
+                }
+                case NONE:
+                default:
+                {
+                    res = false;
+                    break;
+                }
+                    
+            }
+        }
+        vPendingMainThreadTasks.clear();
+        
+        // 4. Main Thread unlocks PGE Thread
+        {
+            std::lock_guard<std::mutex> lock(pgeThreadPendingTasksMutex);
+            isPGEThreadResetting = false;  // Release PGE thread
+            isMainThreadResetting = false; // Reset main thread flag
+        }
+        pgeThreadResetCondition.notify_all();  // Wake up PGE thread
+        return res;
+    }
+
+//------ Events Handlers -----
+
+    void Host_Apple_MacOS::MacApplicationEventsHandler()
+    {
+       pMacApplication->setWillFinishLaunchingCallback([]() { });
+       
+       pMacApplication->setDidFinishLaunchingCallback([&]() {
+           // Queue the Create OpenGL context task
+           vPendingMainThreadTasks.push_back(CREATE_OPENGL_RENDERER);
+           // We need to wait until the application has launched to get the keyboard layout
+           pPGEwindow->keyboard.UseKeyboardLayout(GetKeyboardLayout());
+        
+           
+       });
+       
+       pMacApplication->setWillTerminateCallback([&]() {
+		   //todo : add any cleanup code here if needed
+           });
+       
+       pMacApplication->setDidBecomeActiveCallback([]() { });
+       
+       pMacApplication->setWillResignActiveCallback([]() { });
+        
+    }
+
+    void Host_Apple_MacOS::MacWindowEventsHandler()
+    {
+        pMacOSWindow->setWindowDidResizeCallback([&]() {
+            AddPendingMainThreadTask(RESIZE_WINDOW);
+        });
+
+        pMacOSWindow->setWindowWillCloseCallback([&]() {
+            // NOTE: Do not add this event to PendingMainThreadTasks as it will cause deadlock since the main thread is required to process the close event but the close event is waiting on the main thread tasks to process it
+            pPGEwindow->olc_OnWindowClose();
+            pPGEwindow->olc_ShouldRemove();
+        });
+
+        pMacOSWindow->setWindowDidBecomeKeyCallback([&]() {
+            AddPendingMainThreadTask(BECOME_ACTIVE);
+        });
+
+        pMacOSWindow->setWindowDidResignKeyCallback([&]() {
+            AddPendingMainThreadTask(RESIGN_ACTIVE);
+        });
+       
+        pMacOSWindow->setWindowDidMiniaturizeCallback([&]() {
+            AddPendingMainThreadTask(MINIMIZE_WINDOW);
+        });
+       
+        pMacOSWindow->setWindowDidDeminiaturizeCallback([&]() {
+            AddPendingMainThreadTask(DEMINIMIZE_WINDOW);
+        });
+        
+    }
+    
+    // handles both down and up strokes for every supported key that isn't a modifier
+    void Host_Apple_MacOS::KeyboardEventHandler(const olc::apis::macos::KeyEvent& event, bool isPressed)
+    {
+        unsigned short keyCode = event.keyCode;
+        
+        // handle num clear/lock key only on the down stroke.
+        if(isPressed && keyCode == 71)
+        {
+            bNumLockActive = !bNumLockActive;
+            return;
+        }
+
+        if(!bNumLockActive)
+        {
+            // 84 down, 86 left, 88 right, 91 up >>> 125 down, 123 left, 124 right, 126 up
+            switch(keyCode)
+            {
+                case 84: keyCode = 125; break;
+                case 86: keyCode = 123; break;
+                case 88: keyCode = 124; break;
+                case 91: keyCode = 126; break;
+                default: break;
+            }
+        }
+
+        // The @ symbol does not change position from US - UK keyboards on MacOS, so we handle it here
+        if(event.modifierFlags & NSEventModifierFlagShift && event.keyCode == 39)
+            keyCode = 50;
+        
+        pPGEwindow->olc_OnKeyPress(mapKeys[keyCode], isPressed);
+    }
+
+    void Host_Apple_MacOS::MacEventsHandler()
+    {
+        // General MacOS key event handling code here
+        // Reference: https://eastmanreference.com/complete-list-of-applescript-key-codes
+
+        // Set up keyboard event handlers
+        pMacOSEventHandler->onKeyDown([&](const olc::apis::macos::KeyEvent& event) {
+            KeyboardEventHandler(event, true);
+        });
+
+        pMacOSEventHandler->onKeyUp([&](const olc::apis::macos::KeyEvent& event) {
+            KeyboardEventHandler(event, false);
+        });
+
+        // Set up keyboard flag event handlers
+        pMacOSEventHandler->onFlagsChanged([&](const olc::apis::macos::FlagsChangedEvent& event) {
+
+            static unsigned int prevFlags = 0;
+            unsigned int changedFlags = event.modifierFlags ^ prevFlags;
+            
+            // Check For Shift key
+            if (changedFlags & NSEventModifierFlagShift) {
+                bool isPressed = event.modifierFlags & NSEventModifierFlagShift;
+                pPGEwindow->olc_OnKeyPress(Key::SHIFT, isPressed);
+            }
+            
+            // Check for Control key
+            if (changedFlags & NSEventModifierFlagControl) {
+                bool isPressed = event.modifierFlags & NSEventModifierFlagControl;
+                pPGEwindow->olc_OnKeyPress(Key::CTRL, isPressed);
+            }
+
+            if (changedFlags & NSEventModifierFlagCommand) {
+                bool isPressed = event.modifierFlags & NSEventModifierFlagCommand;
+                if(isPressed)
+                    std::cout << "PGE3 doesn't currently support ALT/Command keys but it should.\n";
+                
+                // pPGEwindow->olc_OnKeyPress(Key::ALT, isPressed);
+            }
+
+            // caps lock doesn't appear to trigger any event
+            prevFlags = event.modifierFlags;
+        });
+
+        // Set up mouse event handlers
+        pMacOSEventHandler->onMouseDown([&](const olc::apis::macos::MouseEvent& event) {
+                pPGEwindow->olc_OnMouseButton(event.buttonNumber, true);
+        });
+        
+        pMacOSEventHandler->onMouseUp([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseButton(event.buttonNumber, false);
+        });
+        
+        pMacOSEventHandler->onMouseMoved([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseMove({static_cast<int>(event.x), static_cast<int>(event.y)});
+        });
+        
+        pMacOSEventHandler->onMouseDragged([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseMove({static_cast<int>(event.x), static_cast<int>(event.y)});
+        });
+
+        pMacOSEventHandler->onRightMouseDragged([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseMove({static_cast<int>(event.x), static_cast<int>(event.y)});
+        });
+
+        pMacOSEventHandler->onOtherMouseUp([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseButton(event.buttonNumber, false);
+        });
+
+        pMacOSEventHandler->onRightMouseDown([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseButton(event.buttonNumber, true);
+        });
+        
+        pMacOSEventHandler->onRightMouseUp([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseButton(event.buttonNumber, false);
+            
+        });
+
+        pMacOSEventHandler->onOtherMouseDown([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseButton(event.buttonNumber, true);
+        });
+
+         pMacOSEventHandler->onOtherMouseUp([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseButton(event.buttonNumber, false);
+        });
+
+        pMacOSEventHandler->onOtherMouseDragged([&](const olc::apis::macos::MouseEvent& event) {
+            pPGEwindow->olc_OnMouseMove({static_cast<int>(event.x), static_cast<int>(event.y)});
+        });
+
+        pMacOSEventHandler->onScrollWheel([&](const olc::apis::macos::ScrollWheelEvent& event) {
+            // Although MacOS provides both deltaX and deltaY, we will only use deltaY for vertical scrolling
+            pPGEwindow->olc_OnMouseWheel(static_cast<int>(event.deltaY));
+        });
+
+         // Touch events — map trackpad multi-touch to hw::Touch via olc_OnTouch
+        pMacOSEventHandler->onTouchBegan([&](const olc::apis::macos::TouchEvent& event) {
+            pPGEwindow->olc_OnTouch(event.touchID,
+                {static_cast<float>(event.x), static_cast<float>(event.y)},
+                true, false,
+                {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
+        });
+
+        pMacOSEventHandler->onTouchMoved([&](const olc::apis::macos::TouchEvent& event) {
+            pPGEwindow->olc_OnTouch(event.touchID,
+                {static_cast<float>(event.x), static_cast<float>(event.y)},
+                false, false,
+                {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
+        });
+
+        pMacOSEventHandler->onTouchEnded([&](const olc::apis::macos::TouchEvent& event) {
+            pPGEwindow->olc_OnTouch(event.touchID,
+                {static_cast<float>(event.x), static_cast<float>(event.y)},
+                false, true,
+                {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
+        });
+
+        pMacOSEventHandler->onTouchCancelled([&](const olc::apis::macos::TouchEvent& event) {
+            pPGEwindow->olc_OnTouch(event.touchID,
+                {static_cast<float>(event.x), static_cast<float>(event.y)},
+                false, true,  // treat cancel as release
+                {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
+        });
+
+        // Stylus (tablet) events — full pressure, tilt and rotation data
+        pMacOSEventHandler->onStylus([&](const olc::apis::macos::StylusEvent& event) {
+            
+            pPGEwindow->olc_OnTouch(
+                event.touchID,
+                {static_cast<float>(event.x), static_cast<float>(event.y)},
+                event.bPress,
+                event.bRelease,
+                {1.0f, 1.0f},       // stylus contact size — nominal 1x1
+                true,               // bStylus = true
+                event.pressure,
+                event.rotation,
+                {event.tiltX, event.tiltY}
+            );
+        });
+        
+    }
+
+}
+#endif
+
+#if OLC_HOST == OLC_HOST_IOS
+namespace olc::host {
+    
+
+    // NSEventModifierFlags values
+    constexpr unsigned int NSEventModifierFlagCapsLock   = 1 << 16; // 0x10000
+    constexpr unsigned int NSEventModifierFlagShift      = 1 << 17; // 0x20000
+    constexpr unsigned int NSEventModifierFlagControl    = 1 << 18; // 0x40000
+    constexpr unsigned int NSEventModifierFlagCommand    = 1 << 20; // 0x100000
+
+    Host_Apple_iOS::Host_Apple_iOS()
+    {
+         // Reference: https://eastmanreference.com/complete-list-of-applescript-key-codes
+        mapKeys[0x00] = Key::NONE;
+
+        // Map macOS key codes to olc::Key codes
+        mapKeys[4]  = Key::A;
+        mapKeys[5]  = Key::B;
+        mapKeys[6]  = Key::C;
+        mapKeys[7]  = Key::D;
+        mapKeys[8]  = Key::E;
+        mapKeys[9]  = Key::F;
+        mapKeys[10] = Key::G;
+        mapKeys[11] = Key::H;
+        mapKeys[12] = Key::I;
+        mapKeys[13] = Key::J;
+        mapKeys[14] = Key::K;
+        mapKeys[15] = Key::L;
+        mapKeys[16] = Key::M;
+        mapKeys[17] = Key::N;
+        mapKeys[18] = Key::O;
+        mapKeys[19] = Key::P;
+        mapKeys[20] = Key::Q;
+        mapKeys[21] = Key::R;
+        mapKeys[22] = Key::S;
+        mapKeys[23] = Key::T;
+        mapKeys[24] = Key::U;
+        mapKeys[25] = Key::V;
+        mapKeys[26] = Key::W;
+        mapKeys[27] = Key::X;
+        mapKeys[28] = Key::Y;
+        mapKeys[29] = Key::Z;
+
+        // Numeric keys
+        mapKeys[30] = Key::K1;
+        mapKeys[31] = Key::K2;
+        mapKeys[32] = Key::K3;
+        mapKeys[33] = Key::K4;
+        mapKeys[34] = Key::K5;
+        mapKeys[35] = Key::K6;
+        mapKeys[36] = Key::K7;
+        mapKeys[37] = Key::K8;
+        mapKeys[38] = Key::K9;
+        mapKeys[39] = Key::K0;
+        
+        // Other Keys
+        mapKeys[40]  = Key::ENTER;      // Return
+        mapKeys[41]  = Key::ESCAPE;     // Escape
+        mapKeys[42]  = Key::BACK;       // Delete (Backspace)
+        mapKeys[43]  = Key::TAB;        // Tab
+        mapKeys[44]  = Key::SPACE;      // Space
+        mapKeys[45]  = Key::DEL;        // Forward Delete
+        mapKeys[57]  = Key::CAPS_LOCK;  // Caps Lock
+        mapKeys[114] = Key::INS;        // Help (Insert equivalent)
+
+        // Function Keys
+        mapKeys[58] = Key::F1;
+        mapKeys[59] = Key::F2;
+        mapKeys[60] = Key::F3;
+        mapKeys[61] = Key::F4;
+        mapKeys[62] = Key::F5;
+        mapKeys[63] = Key::F6;
+        mapKeys[64] = Key::F7;
+        mapKeys[65] = Key::F8;
+        mapKeys[66] = Key::F9;
+        mapKeys[67] = Key::F10;
+        mapKeys[68] = Key::F11;
+        mapKeys[69] = Key::F12;
+
+        mapKeys[74] = Key::HOME;       // Home
+        mapKeys[75] = Key::PGUP;       // Page Up
+        mapKeys[76] = Key::DEL;        // Delete (Forward Delete)
+        mapKeys[77] = Key::END;        // End
+        mapKeys[78] = Key::PGDN;       // Page Down
+       
+        
+        // Arrow Keys
+        mapKeys[79] = Key::RIGHT;
+        mapKeys[80] = Key::LEFT;
+        mapKeys[81] = Key::DOWN;
+        mapKeys[82] = Key::UP;
+        
+        // CHRL, SHIFT, Instert (Help) Keys
+        mapKeys[117] = Key::INS;          // Insert (Help key on Mac)
+        mapKeys[224]  = Key::CTRL;        // Left Control
+        mapKeys[225]  = Key::SHIFT;       // Left Shift
+        mapKeys[229]  = Key::SHIFT;       // Left Shift
+       
+        // Symbol Keys (OEM equivalents)
+        mapKeys[51] = Key::OEM_1;       // On US and UK keyboards this is the ';:' key
+        mapKeys[56] = Key::OEM_2;       // On US and UK keyboards this is the '/?' key
+        mapKeys[53] = Key::OEM_3;       // On US and UK keyboards this is the '`~' key (Grave accent `)
+        mapKeys[47] = Key::OEM_4;       // On US and UK keyboards this is the '[{' key
+        mapKeys[49] = Key::OEM_5;       // On US keyboard this is '\|' key.
+        mapKeys[48] = Key::OEM_6;       // On US and UK keyboards this is the ']}' key
+        mapKeys[52] = Key::OEM_7;       // On US keyboard this is the single/double quote key. On UK, this is the single quote/@ symbol key
+        mapKeys[24] = Key::EQUALS;      // Equal sign =
+        mapKeys[43] = Key::COMMA;       // Comma ,
+        mapKeys[27] = Key::MINUS;       // Minus -
+        mapKeys[47] = Key::PERIOD;      // Period .
+        
+        // Unknown and may not be supported, but included for completeness will come back to this
+        mapKeys[84] = Key::NP_DIV;      // Numpad /
+        mapKeys[85] = Key::NP_MUL;      // Numpad *
+        mapKeys[86] = Key::NP_SUB;      // Numpad -
+        mapKeys[87] = Key::NP_ADD;      // Numpad +
+        mapKeys[88] = Key::RETURN;      // Numpad Enter
+        mapKeys[89] = Key::NP1;
+        mapKeys[90] = Key::NP2;
+        mapKeys[91] = Key::NP3;
+        mapKeys[92] = Key::NP4;
+        mapKeys[93] = Key::NP5;
+        mapKeys[94] = Key::NP6;
+        mapKeys[95] = Key::NP7;
+        mapKeys[96] = Key::NP8;
+        mapKeys[97] = Key::NP9;
+        mapKeys[98] = Key::NP0;
+        mapKeys[99] = Key::NP_DECIMAL;  // Numpad .
+        mapKeys[915] = Key::PAUSE;      // Not Supported, F16 (often used as pause)
+        mapKeys[916] = Key::SCROLL;     // Not Supported, F14 (scroll lock equivalent)
+        mapKeys[917] = Key::OEM_8;      // Section sign § (varies by keyboard)
+    }
+
+    bool Host_Apple_iOS::AddWindowFrame(olc::Window* pWindow, const olc::vi2d& vWindowPos, const olc::vi2d& vWindowSize, const bool bFullScreen)
+    {
+        olc_IgnoreUnused(bFullScreen); 
+        pPGEwindow = pWindow;
+        pPGEwindow->SetWindowPosition(vWindowPos);
+        pPGEwindow->SetWindowSize(vWindowSize);
+        pPGEwindow->LinkToHost(this);
+
+        // iOS typically uses full screen, but we'll store the requested dimensions
+        frameBounds.x = static_cast<double>(vWindowPos.x);
+        frameBounds.y = static_cast<double>(vWindowPos.y);
+        frameBounds.width = static_cast<double>(vWindowSize.x);
+        frameBounds.height = static_cast<double>(vWindowSize.y);
+        
+        return true;
+    }
+
+    bool Host_Apple_iOS::CloseWindowFrame(olc::Window* pWindow)
+    {
+        if (!pIOSViewController) return false;
+        if (!pWindow) return false;
+        pWindow->olc_OnWindowClose();
+        return true;
+    }
+
+    bool Host_Apple_iOS::UpdateWindowFrameTitle(olc::Window* pWindow)
+    {
+        if (!pIOSViewController) return false;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            pIOSViewController->setTitle(pWindow->GetWindowTitle().c_str());
+        });
+        return true;
+    }
+
+    std::vector<void*> Host_Apple_iOS::GetHostWindowDescriptor(olc::Window* pWindow)
+    {
+        return vIOSWindowDescriptors;
+    }
+
+    bool Host_Apple_iOS::SyncWithDesktopComposite()
+    {
+        if(!enableVSync)
+        {
+            pIOSOpenGLRenderer->enableVsync();
+            enableVSync = true;
+        }
+        
+        return enableVSync;
+    }
+
+    bool Host_Apple_iOS::SetMousePosition(olc::Window* pWindow, const olc::vi2d& vPos)
+    {
+        olc_IgnoreUnused(pWindow);
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            //pMacOSWindow->setCursorPosition(vPos.x, vPos.y);
+        });
+        return false;
+    }
+
+    bool Host_Apple_iOS::SetMouseVisible(olc::Window* pWindow, const bool bVisible)
+    {
+        olc_IgnoreUnused(pWindow);
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            //pMacOSWindow->setCursorVisibility(bVisible);
+        });
+        return true;
+    }
+
+    bool Host_Apple_iOS::SetFullScreen(olc::Window* pWindow, const bool bFullScreen)
+    {
+        olc_IgnoreUnused(pWindow);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            //pMacOSWindow->toggleFullScreen();
+        });
+        return true;
+    }
+
+     bool Host_Apple_iOS::OnApplicationStart(olc::PixelGameEngine* pPrimary){
+        pPrimaryPGE = pPrimary;
+        return true;
+    }
+
+    bool Host_Apple_iOS::StartSystem(){
+        
+        // Pre-context start hook
+        pPrimaryPGE->OnPreContextStart();
+        
+        // Create iOS Application instance
+        pIOSApplication = std::make_unique<olc::apis::ios::Application>();
+        
+        // Set up application delegate event handlers
+        IOSApplicationEventsHandler();
+        
+        // Initialize and activate application first
+        pIOSApplication->initialize();
+
+        return true;
+
+    }
+
+    bool Host_Apple_iOS::StopSystem()
+    {
+        // Note: iOS applications typically don't have a "stop" method, but we can clean up resources here if needed
+        //dispatch_sync(dispatch_get_main_queue(), ^{
+            
+        //});
+        return true;
+    }
+
+    bool Host_Apple_iOS::OnSystemThreadStart()
+    {
+        return pPrimaryPGE->OnContextStart();
+    }
+
+    bool Host_Apple_iOS::OnSystemTick()
+    {
+        return pPrimaryPGE->OnContextTick();
+    }
+
+    bool Host_Apple_iOS::OnSystemThreadEnd()
+    {
+        return pPrimaryPGE->OnContextEnd();
+    }
+
+    bool Host_Apple_iOS::OnApplicationEnd()
+    {
+        return true;
+    }
+
+    std::string Host_Apple_iOS::GetApplicationPath()
+    {
+        if(pIOSApplication)
+        {
+            return pIOSApplication->getApplicationPath();
+        }
+        return "ACCESS-DEINED";
+    }
+
+    olc::KeyboardLayout Host_Apple_iOS::GetKeyboardLayout() const
+    {
+        // Get system locale from MacOS Application
+        // We need to wait until the application has launched to get the keyboard layout
+        // Therefore this function is called again from setDidFinishLaunchingCallback event
+        if (pIOSApplication)
+        {
+            std::string locale = pIOSApplication->getSystemLocale();
+            if (locale == "en_GB")
+            {
+                return olc::KeyboardLayout::QWERTY_UK;
+            }
+            else if (locale == "en_US")
+            {
+                return olc::KeyboardLayout::QWERTY_US;
+            }
+            else if (locale == "fr_FR")
+            {
+                return olc::KeyboardLayout::AZERTY;
+            }
+            else if (locale == "de_DE")
+            {
+                return olc::KeyboardLayout::QWERTZ;
+            }
+        }
+        // Default to QWERTY if unknown
+        return olc::KeyboardLayout::QWERTY_UK;
+    }
+
+
+    void Host_Apple_iOS::UpdateIOSViewFrameBounds(olc::apis::ios::DeviceOrientation orientation)
+    {
+        // NOTE: iOS handles rotation automatically, but we need to adjust the PGE window size accordingly
+        // IMPORTANT: PortraitUpsideDown is not implemented, in short have a happy life and forget this exist ;)
+        CurrentOrientation = orientation;
+        switch (orientation) {
+            case olc::apis::ios::DeviceOrientation::Portrait:
+                pIOSViewController->getViewSize(frameBounds.width, frameBounds.height);
+                pPGEwindow->olc_OnWindowSize({static_cast<int>(frameBounds.width), static_cast<int>(frameBounds.height)});
+                break;
+            case olc::apis::ios::DeviceOrientation::LandscapeLeft:
+            case olc::apis::ios::DeviceOrientation::LandscapeRight:
+                pIOSViewController->getViewSize(frameBounds.width, frameBounds.height);
+                pPGEwindow->olc_OnWindowSize({static_cast<int>(frameBounds.height), static_cast<int>(frameBounds.width)});
+                break;
+            case olc::apis::ios::DeviceOrientation::FaceUp:
+            case olc::apis::ios::DeviceOrientation::FaceDown:
+            case olc::apis::ios::DeviceOrientation::PortraitUpsideDown:
+            case olc::apis::ios::DeviceOrientation::Unknown:
+            default:
+                break;
+        }
+        
+
+    }
+
+    void Host_Apple_iOS::IOSApplicationEventsHandler()
+    {
+        // Application event handling code here
+        // Set application delegate event handlers
+        pIOSApplication->setDidFinishLaunchingCallback([&]() {
+            // Tell the PGE 3.0 we have loaded the application
+          
+            pIOSApplication->activate();
+            
+            // Initialize the iOS View Controller
+            pIOSViewController = std::make_unique<olc::apis::ios::ViewController>(frameBounds.width, frameBounds.height, "OLC PGE 3 iOS Demo");
+            
+            // Set up view controller event handlers
+            IOSViewControllerEventsHandler();
+            
+            // Present the view controller
+            pIOSViewController->present();
+            
+            // App became active (foreground)
+            if(pIOSOpenGLRenderer == nullptr)
+            {
+                vIOSWindowDescriptors.clear(); // ensure we are starting fresh
+                pIOSOpenGLRenderer = std::make_shared<olc::apis::ios::OpenGLRenderer>();
+                
+                pIOSOpenGLRenderer->attachToViewController(*pIOSViewController);
+                pIOSOpenGLRenderer->setupContext();
+
+                pIOSGLContextObj = pIOSOpenGLRenderer->getEAGLContext();
+                
+                pIOSOpenGLRenderer->setVsync(false);
+                
+                vIOSWindowDescriptors.push_back(pIOSGLContextObj);
+            }
+            
+            // Set up OpenGL renderer for visual feedback
+            pIOSOpenGLRenderer->makeCurrentContext();
+            
+            //std::cout << "iOS Application did finish launching." << std::endl;
+        });
+        
+        pIOSApplication->setWillTerminateCallback([&]() {
+            // TODO: Implement olc_OnApplicationTerminate in window.h/cpp
+            //std::cout << "iOS Application will terminate." << std::endl;
+        });
+        
+        pIOSApplication->setDidBecomeActiveCallback([&]() {
+            // TODO: manage thread resuming
+            
+            if(pPGEwindow)
+                pPGEwindow->olc_OnFocus(true);
+            ///std::cout << "iOS Application did become active." << std::endl;
+        });
+        
+        pIOSApplication->setWillResignActiveCallback([&]() {
+            
+            if(pPGEwindow)
+                pPGEwindow->olc_OnFocus(false);
+            // TODO: manage thread pausing
+            //std::cout << "iOS Application will resign active." << std::endl;
+        });
+        
+        pIOSApplication->setDidEnterBackgroundCallback([&]() {
+            // App entered background
+            if(pPGEwindow)
+                pPGEwindow->olc_OnFocus(false);
+            std::cout << "iOS Application did enter background." << std::endl;
+        });
+        
+        pIOSApplication->setWillEnterForegroundCallback([&]() {
+            // App will enter foreground
+            if(pPGEwindow)
+                pPGEwindow->olc_OnFocus(true);
+            //std::cout << "iOS Application will enter foreground." << std::endl;
+        });
+    }
+
+    void Host_Apple_iOS::IOSViewControllerEventsHandler()
+    {
+        // View controller event handling code here
+        pIOSViewController->setViewDidLoadCallback([&]() {
+            // View controller loaded
+                      
+            // Set up GLKView after presentation
+            pIOSGLKView = std::make_unique<olc::apis::ios::GLKView>(*pIOSViewController);
+            // Setup Event handlers (including touch events)
+            IOSGLKViewEventHandler();
+            if (!pIOSGLKView->initialize())
+            {
+                std::cerr << "Failed to initialize GLKView." << std::endl;
+                return;
+            }
+            pIOSGLKView->enableTouchHandling();
+            
+            auto test = pIOSGLKView->isMultipleTouchEnabled();
+            if(!test)
+                pIOSGLKView->setMultipleTouchEnabled(true);
+            pIOSGLKView->debugTouchSetup();
+            //std::cout << "iOS View Controller did load." << std::endl;
+        });
+
+        pIOSViewController->setViewWillAppearCallback([&]() {
+            // View will appear
+
+            //std::cout << "iOS View Controller will appear." << std::endl;
+        });
+
+        pIOSViewController->setViewDidAppearCallback([&]() {
+            // View appeared
+            
+            if(!bIOSDrawing)
+            {
+                pIOSViewController->setPaused(false); // Start drawing
+            }
+            //std::cout << "iOS View Controller did appear." << std::endl;
+        });
+
+        pIOSViewController->setViewWillDisappearCallback([&]() {
+            // View will disappear
+            pPGEwindow->olc_OnWindowClose();
+            //std::cout << "iOS View Controller will disappear." << std::endl;
+        });
+
+        pIOSViewController->setViewDidDisappearCallback([&]() {
+            // View disappeared
+                        
+            pPGEwindow->olc_ShouldRemove();
+            //std::cout << "iOS View Controller did disappear." << std::endl;
+        });
+        
+        pIOSViewController->setViewDidLayoutSubviewsCallback([&]() {
+            
+            UpdateIOSViewFrameBounds(CurrentOrientation);
+        });
+        
+        pIOSViewController->setUpdateCallback( [&]() {
+            // This is where we will call the engine's main loop for rendering
+            
+        });
+        
+        // Device orientation changes
+        pIOSViewController->setOrientationChangedCallback([&](olc::apis::ios::DeviceOrientation orientation) {
+            UpdateIOSViewFrameBounds(orientation);
+        });
+        
+    }
+
+    // handles both down and up strokes for every supported key that isn't a modifier
+    void Host_Apple_iOS::KeyboardEventHandler(uint16_t nKeyCode, uint nModifierFlags, bool isPressed){
+        // handle num clear/lock key only on the down stroke.
+        if(isPressed && nKeyCode == 83)
+        {
+            bNumLockActive = !bNumLockActive;
+            return;
+        }
+        
+        if(!bNumLockActive)
+        {
+            // 94 right,  92 left,  90 down, 96 up >>> 79 RIGHT, 80 LEFT, 81 DOWN, 82 UP
+            switch(nKeyCode)
+            {
+                case 94: nKeyCode = 79; break;
+                case 92: nKeyCode = 80; break;
+                case 90: nKeyCode = 81; break;
+                case 96: nKeyCode = 82; break;
+                default: break;
+            }
+        }
+        
+        // Check Modifier flags for Shift, Control, Caps, and Command keys
+        unsigned int changedFlags = nModifierFlags ^ prevFlags;
+        
+        // Check For Shift key
+        if (changedFlags & NSEventModifierFlagShift) {
+            bool isPressed = nModifierFlags & NSEventModifierFlagShift;
+            pPGEwindow->olc_OnKeyPress(Key::SHIFT, isPressed);
+        }
+        
+        // Check for Control key
+        if (changedFlags & NSEventModifierFlagControl) {
+            bool isPressed = nModifierFlags & NSEventModifierFlagControl;
+            pPGEwindow->olc_OnKeyPress(Key::CTRL, isPressed);
+        }
+
+        // Check for Option / ALT key
+        if (changedFlags & NSEventModifierFlagCommand) {
+            bool isPressed = nModifierFlags & NSEventModifierFlagCommand;
+            if(isPressed)
+                std::cout << "PGE3 doesn't currently support ALT/Command keys but it should.\n";
+        }
+
+        prevFlags = nModifierFlags;
+        
+        pPGEwindow->olc_OnKeyPress(mapKeys[nKeyCode], isPressed);
+        
+   }
+
+    void Host_Apple_iOS::IOSGLKViewEventHandler()
+    {
+        
+        // Set up drawing callback for GLKView
+        pIOSGLKView->setDrawCallback([&](double x, double y, double width, double height) {
+            
+            pIOSOpenGLRenderer->makeCurrentContext();
+            
+            if(!bPGEInitialized)
+            {
+                pPrimaryPGE->OnContextStart();
+                bPGEInitialized = true;
+            }
+            pPrimaryPGE->OnContextTick();
+        });
+        
+        // Set up touch event handlers (iOS primary input method)
+        pIOSGLKView->setTouchBeganCallback([&](const olc::apis::ios::TouchEvent& event) {
+            // Convert touch to mouse button press for compatibility
+            pPGEwindow->olc_OnTouch(event.touchID,
+                    {static_cast<float>(event.x), static_cast<float>(event.y)},
+                    true, false,
+                    {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
+            //std::cout << "ID: " << event.touchID << " Touch Began at (" << event.x << ", " << event.y << ") with size (" << event.sizeX << ", " << event.sizeY << ")" << std::endl;
+        });
+
+        pIOSGLKView->setTouchMovedCallback([&](const olc::apis::ios::TouchEvent& event) {
+              pPGEwindow->olc_OnTouch(event.touchID,
+                    {static_cast<float>(event.x), static_cast<float>(event.y)},
+                    false, false,
+                    {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
+            //std::cout << "ID: " << event.touchID << " Touch Moved to (" << event.x << ", " << event.y << ") with size (" << event.sizeX << ", " << event.sizeY << ")" << std::endl;
+        });
+
+        pIOSGLKView->setTouchEndedCallback([&](const olc::apis::ios::TouchEvent& event) {
+              pPGEwindow->olc_OnTouch(event.touchID,
+                    {static_cast<float>(event.x), static_cast<float>(event.y)},
+                    false, true,
+                    {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
+            //std::cout << "ID: " << event.touchID << " Touch Ended at (" << event.x << ", " << event.y << ") with size (" << event.sizeX << ", " << event.sizeY << ")" << std::endl;
+        });
+
+        pIOSGLKView->setTouchCancelledCallback([&](const olc::apis::ios::TouchEvent& event) {
+             pPGEwindow->olc_OnTouch(event.touchID,
+                    {static_cast<float>(event.x), static_cast<float>(event.y)},
+                    false, true,  // treat cancel as release
+                    {static_cast<float>(event.sizeX), static_cast<float>(event.sizeY)});
+            //std::cout << "ID: " << event.touchID << " Touch Cancelled at (" << event.x << ", " << event.y << ") with size (" << event.sizeX << ", " << event.sizeY << ")" << std::endl;
+        });
+
+        // Set up keyboard event handlers
+        pIOSGLKView->setKeyDownCallback([&](uint16_t keyCode, const std::string& characters, uint modifierFlags) {
+            //std::cout << "Key Down - Code: " << keyCode << ", Chars: '" << characters << "'" << std::endl;
+            KeyboardEventHandler(keyCode, modifierFlags, true);
+        });
+
+        pIOSGLKView->setKeyUpCallback([&](uint16_t keyCode, const std::string& characters, uint modifierFlags) {
+            //std::cout << "Key Up - Code: " << keyCode << std::endl;
+            KeyboardEventHandler(keyCode, modifierFlags, false);
+        });
+    }
+}
+
+#endif
+
 #if OLC_HOST == OLC_HOST_LINUX_X11
 namespace olc::host
 {
@@ -16371,6 +16646,10 @@ namespace olc::host
             }
             return nullptr;
         };
+
+        // Create a pollfd that we will use later to wait for events to appear on the queue
+        // preventing the event loop from becoming a busy loop
+        pollfd x11_connection_fd {.fd = ConnectionNumber(olc_Display), .events = POLLIN};
 
         X11::XEvent xev;
         while(systemActive){
@@ -16538,6 +16817,9 @@ namespace olc::host
                     }
                 }
             }
+
+            // Wait until an event appears on the x11 event queue file descriptor
+            poll(&x11_connection_fd, 1, -1);
         }
 
         systemActive = false;
@@ -17102,7 +17384,7 @@ namespace olc::host
     {
         pPrimaryPGE->OnPreContextStart();
 
-        		// Create system thread - handles gpu context
+        // Create system thread - handles gpu context
 		std::thread threadSystem([this]()
 			{
 				// Notify start of system thread
@@ -17130,11 +17412,16 @@ namespace olc::host
 				}
 			});
         
+        pollfd decor_wl_fd {.fd = libdecor_get_fd(decor_context), .events = POLLIN};
+
         bool keep_running = true;
         while(systemActive && keep_running) {
             if(decor_context) {
-                std::lock_guard<std::mutex> l{decor_mutex};
-                keep_running = libdecor_dispatch(decor_context, 0) >= 0;
+                poll(&decor_wl_fd, 1, -1);
+                {
+                    std::lock_guard<std::mutex> l{decor_mutex};
+                    keep_running = libdecor_dispatch(decor_context, 0) >= 0;
+                }
             }
         }
         
@@ -19452,6 +19739,336 @@ void android_main(struct android_app* app)
 }
 #endif
 
+#else // Using wxWidgets
+namespace olc::wx
+{
+	PGE3Core::PGE3Core(wxWindow* parent) : wxGLCanvas(parent, -1, nullptr)
+	{
+		// Create a wxWidgets "glContext" targeting OpenGL 3.3
+		wxGLContextAttrs ctxAttrs;
+		ctxAttrs.CoreProfile().OGLVersion(3, 3).EndList();
+		m_glContext = new wxGLContext(this, NULL, &ctxAttrs);
+		SetCurrent(*m_glContext);
+
+
+		// Create all the vital parts of PGE
+		pImageLoader = std::make_unique<olc::imload::OLC_IMAGELOADER_CLASS>();
+
+		// Create the renderer
+		olc::gpu::RendererConfig cfgRenderer;
+		pRenderer = std::make_unique<olc::gpu::OLC_GPU_CLASS>();
+		pRenderer->CreateDevice({ this }, cfgRenderer);
+
+		// Load the font
+		olc::pgeguts::CreateClassicFont(this);
+
+		// wxWidgets should hide this pseudo-canvas. It was only
+		// needed to get the context
+		this->Hide();
+	}
+
+	PGE3Core::~PGE3Core()
+	{
+		delete m_glContext;
+	}
+
+	bool PGE3Core::CreateImage(olc::Image& image, const olc::vi2d& size, const ImageConfig& cfg)
+	{
+		// Create CPU Image
+		if (!image.CreateNoGPU(size, cfg))
+			return false;
+
+		// Create GPU Image
+		auto id = pRenderer->CreateTexture(image.Size(), cfg);
+		if (id == 0)
+		{
+			image.CreateNoGPU({ 0,0 });
+			return false;
+		}
+
+		// Associate CPU object with GPU Resource
+		image.SetGPUID(id);
+		return true;
+	}
+
+	bool PGE3Core::CreateImageFromFile(olc::Image& image, const std::string& sFileName, const ImageConfig& cfg)
+	{
+		if (pImageLoader->CreateImageFromFile(image, sFileName))
+		{
+			// Image has loaded ok, and populated into pixel vector
+			// 
+			// Create GPU Image
+			auto id = pRenderer->CreateTexture(image.Size(), cfg);
+			if (id == 0)
+			{
+				image.CreateNoGPU({ 0,0 });
+				return false;
+			}
+
+			// Associate CPU object with GPU Resource
+			image.SetGPUID(id);
+			return true;
+		}
+
+		return false;
+	}
+
+	bool PGE3Core::CreateImageFromMemory(olc::Image& image, const uint8_t* data, const size_t bytes, const ImageConfig& cfg)
+	{
+		if (pImageLoader->CreateImageFromMemory(image, data, bytes))
+		{
+			// Image has loaded ok, and populated into pixel vector
+			// 
+			// Create GPU Image
+			auto id = pRenderer->CreateTexture(image.Size(), cfg);
+			if (id == 0)
+			{
+				image.CreateNoGPU({ 0,0 });
+				return false;
+			}
+
+			// Associate CPU object with GPU Resource
+			image.SetGPUID(id);
+			return true;
+		}
+
+		std::cout << "Create From Memory Failed\n";
+		return false;
+	}
+
+	bool PGE3Core::WriteImageToFile(const olc::Image& image, const std::string& sFileName)
+	{
+		olc_IgnoreUnused(image, sFileName);
+		return false;
+	}
+
+	void PGE3Core::DestroyImage(olc::Image& image)
+	{
+		// If image has gpu resource, remove it
+		if (image.GetGPUID() != 0)
+		{
+			pRenderer->DeleteTexture(uint32_t(image.GetGPUID()));
+			image.SetGPUID(0);
+		}
+
+		// Free any cpu memory associated with image
+		image.CreateNoGPU({ 0,0 });
+	}
+
+	wxGLContext* PGE3Core::get() const
+	{
+		return m_glContext;
+	}
+
+	olc::gpu::Renderer* PGE3Core::GetRenderer()
+	{
+		return pRenderer.get();
+	}
+
+	olc::imload::ImageLoader* PGE3Core::GetImageLoader()
+	{
+		return pImageLoader.get();
+	}
+
+
+
+	olc::wx::PGE3Core* PGE3Panel::m_pCore = nullptr;
+
+
+
+	PGE3Panel::PGE3Panel(wxWindow* parent) : wxGLCanvas(parent, -1, nullptr)
+	{
+		if (m_pCore == nullptr)
+		{
+			// Create a static PGE3Core
+			m_pCore = new PGE3Core(this);
+		}
+
+		// Set the context via wxWidgets
+		SetCurrent(*m_pCore->get());
+
+		// Associate this instance of draw with the renderer
+		draw.SetGPU(m_pCore->GetRenderer());
+
+		// Create the default draw target
+		bFixedSize = false;
+		m_pCore->CreateImage(imgPrimary, { 256, 240 });
+		
+		ResetDrawState();
+
+		Connect(wxEVT_PAINT, wxPaintEventHandler(olc::wx::PGE3Panel::Event_OnPaint));
+		Connect(wxEVT_SIZE, wxSizeEventHandler(olc::wx::PGE3Panel::Event_OnResize));
+		Connect(wxEVT_MOTION, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMove));
+		Connect(wxEVT_MIDDLE_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMiddleDown));
+		Connect(wxEVT_MIDDLE_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMiddleUp));
+		Connect(wxEVT_MOUSEWHEEL, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseWheel));
+		Connect(wxEVT_LEFT_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseLeftDown));
+		Connect(wxEVT_LEFT_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseLeftUp));
+		Connect(wxEVT_RIGHT_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseRightDown));
+		Connect(wxEVT_RIGHT_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseRightUp));
+	}
+
+	PGE3Panel::PGE3Panel(wxWindow* parent, const olc::vi2d& vFixedSize) : wxGLCanvas(parent, -1, nullptr)
+	{
+		if (m_pCore == nullptr)
+		{
+			// Create a static PGE3Core
+			m_pCore = new PGE3Core(this);
+		}
+
+		// Set the context via wxWidgets
+		SetCurrent(*m_pCore->get());
+
+		// Associate this instance of draw with the renderer
+		draw.SetGPU(m_pCore->GetRenderer());
+
+		// Create the default draw target
+		vFixedSizeImage = vFixedSize;
+		bFixedSize = true;
+		m_pCore->CreateImage(imgPrimary, vFixedSize);
+
+		ResetDrawState();
+
+		Connect(wxEVT_PAINT, wxPaintEventHandler(olc::wx::PGE3Panel::Event_OnPaint));		
+		Connect(wxEVT_MOTION, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMove));
+		Connect(wxEVT_MIDDLE_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMiddleDown));
+		Connect(wxEVT_MIDDLE_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMiddleUp));
+		Connect(wxEVT_MOUSEWHEEL, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseWheel));
+		Connect(wxEVT_LEFT_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseLeftDown));
+		Connect(wxEVT_LEFT_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseLeftUp));
+		Connect(wxEVT_RIGHT_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseRightDown));
+		Connect(wxEVT_RIGHT_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseRightUp));
+	}
+
+	PGE3Panel::~PGE3Panel()
+	{
+		Disconnect(wxEVT_PAINT, wxPaintEventHandler(olc::wx::PGE3Panel::Event_OnPaint));
+		Disconnect(wxEVT_SIZE, wxSizeEventHandler(olc::wx::PGE3Panel::Event_OnResize));
+		Disconnect(wxEVT_MOTION, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMove));
+		Disconnect(wxEVT_MIDDLE_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMiddleDown));
+		Disconnect(wxEVT_MIDDLE_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseMiddleUp));
+		Disconnect(wxEVT_MOUSEWHEEL, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseWheel));
+		Disconnect(wxEVT_LEFT_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseLeftDown));
+		Disconnect(wxEVT_LEFT_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseLeftUp));
+		Disconnect(wxEVT_RIGHT_DOWN, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseRightDown));
+		Disconnect(wxEVT_RIGHT_UP, wxMouseEventHandler(olc::wx::PGE3Panel::Event_OnMouseRightUp));
+	}
+
+	void PGE3Panel::ResetDrawState()
+	{
+		// Set the context via wxWidgets
+		SetCurrent(*m_pCore->get());
+		m_pCore->GetRenderer()->ApplyDefaultShader();
+		draw.SetTarget(imgPrimary);
+		draw.WorldReset();
+		draw.SetBlendMode(olc::BlendMode::Alpha);
+		draw.SetCullMode(olc::CullMode::None);
+	}
+
+	
+
+	void PGE3Panel::Event_OnPaint(wxPaintEvent& evt)
+	{
+		// Configure WX to render this window
+		wxPaintDC(this);
+
+		// Perform actual render
+		ResetDrawState();
+		OnRender();
+		draw.ProcessGPUTasks();
+
+		// Present image to screen in location of panel
+		m_pCore->GetRenderer()->AssignTextureTarget(0, 0);
+
+		olc::vf2d vViewPos = { 0,0 };
+		olc::vf2d vViewSize = { float(GetSize().x), float(GetSize().y) };
+
+		// Present final composite
+		m_pCore->GetRenderer()->SetViewport(vViewPos, vViewSize);
+		m_pCore->GetRenderer()->ClearViewport(olc::Colour::RED, true, true);
+		draw.SetBlendMode(olc::BlendMode::Alpha);
+		draw.SetCullMode(olc::CullMode::None);
+		draw.ImageRect(imgPrimary.flipV(), { 0.0,0.0 }, vViewSize);
+		draw.ProcessGPUTasks();
+
+		// Update Window's primary surface - via wxWidgets
+		SwapBuffers();
+	}
+
+	void PGE3Panel::Event_OnResize(wxSizeEvent& evt)
+	{
+		if (!bFixedSize)
+		{
+			// Resize Target Image
+			SetCurrent(*m_pCore->get());
+			m_pCore->DestroyImage(imgPrimary);
+			m_pCore->CreateImage(imgPrimary, { evt.GetSize().x, evt.GetSize().y });
+		}
+
+		Refresh(true);
+		evt.Skip(true);
+	}
+
+	olc::vf2d PGE3Panel::ScaleMouse(wxMouseEvent& evt)
+	{
+		olc::vf2d vScreenPos = olc::vf2d(float(evt.GetX()), float(evt.GetY()));
+
+		if (bFixedSize)
+			vScreenPos = vScreenPos / olc::vf2d(GetSize().x, GetSize().y) * vFixedSizeImage;
+
+		return vScreenPos;
+	}
+
+	void PGE3Panel::Event_OnMouseLeftUp(wxMouseEvent& evt)
+	{
+		OnMouseLeftUp(draw.ScreenToWorld(ScaleMouse(evt)), evt.ShiftDown(), evt.ControlDown());
+		evt.Skip();
+	}
+
+	void PGE3Panel::Event_OnMouseLeftDown(wxMouseEvent& evt)
+	{
+		OnMouseLeftDown(draw.ScreenToWorld(ScaleMouse(evt)), evt.ShiftDown(), evt.ControlDown());
+		evt.Skip();
+	}
+
+	void PGE3Panel::Event_OnMouseRightUp(wxMouseEvent& evt)
+	{
+		OnMouseRightUp(draw.ScreenToWorld(ScaleMouse(evt)), evt.ShiftDown(), evt.ControlDown());
+		evt.Skip();
+	}
+
+	void PGE3Panel::Event_OnMouseRightDown(wxMouseEvent& evt)
+	{
+		OnMouseRightDown(draw.ScreenToWorld(ScaleMouse(evt)), evt.ShiftDown(), evt.ControlDown());
+		evt.Skip();
+	}
+
+	void PGE3Panel::Event_OnMouseMiddleUp(wxMouseEvent& evt)
+	{
+		OnMouseMiddleUp(draw.ScreenToWorld(ScaleMouse(evt)), evt.ShiftDown(), evt.ControlDown());
+		evt.Skip();
+	}
+
+	void PGE3Panel::Event_OnMouseMiddleDown(wxMouseEvent& evt)
+	{
+		OnMouseMiddleDown(draw.ScreenToWorld(ScaleMouse(evt)), evt.ShiftDown(), evt.ControlDown());
+		evt.Skip();
+	}
+
+	void PGE3Panel::Event_OnMouseMove(wxMouseEvent& evt)
+	{
+		OnMouseMove(draw.ScreenToWorld(ScaleMouse(evt)), evt.ShiftDown(), evt.ControlDown());
+		evt.Skip();
+	}
+
+	void PGE3Panel::Event_OnMouseWheel(wxMouseEvent& evt)
+	{
+		evt.Skip();
+	}
+
+}
+#endif
+
 #define PGE_HOST_IMPLEMENTED 1
 #endif
 
@@ -20444,7 +21061,8 @@ void main()
 		config = cfg;
 
 
-		
+#if !defined(OLC_USE_WXWIDGETS)
+
 #if OLC_HOST == OLC_HOST_WINDOWS
 		// Create OpenGL Device Context
 		if (!PrepareWindowTarget(os_win_id))
@@ -20587,6 +21205,10 @@ void main()
 		return false;
 	}
 #endif
+
+#else // wxWidgets specific
+
+#endif // wxWidgets
 
 		// Can't load OpenGL API until context is loaded
 		auto& gl = olc::apis::opengl::gl::Get();
@@ -20976,7 +21598,7 @@ void main()
 			);
 
 			// Unbind renderbuffer
-			gl.glBindRenderbuffer(gl.GL_RENDERBUFFER_X, nScreenFBO);  // Updated to better support iOS GLKit, and other Platforms FBOs which are not 0
+			gl.glBindRenderbuffer(gl.GL_RENDERBUFFER_X, nScreenFBO); // Updated to better support iOS GLKit, and other Platforms FBOs which are not 0
 		}
 
 		// Update size tracking
@@ -21018,6 +21640,14 @@ void main()
 			gl.glDeleteRenderbuffers(1, &rboId);
 			mapTextureToRenderbuffer.erase(texid);
 		}
+
+		mapTextureSizes.erase(texid);
+
+		if (nCurrentTextureSource == texid)
+			nCurrentTextureSource = 0;
+
+		if (nCurrentTextureTarget == texid)
+			nCurrentTextureTarget = 0;
 		
 		return true;
 	}
@@ -21855,16 +22485,89 @@ void Draw::Pixel(const olc::vf2d& pos, const olc::Pixel col, const olc::Pixel ti
 	// otherwise do nothing
 }
 
-olc::Pixel olc::Draw::GetPixel(olc::Image& image, const olc::vf2d& pos)
+olc::Pixel olc::Draw::GetPixel(olc::Image& image, const olc::vf2d& pos,	const olc::Pixel failcol)
+{
+	olc::vf2d tpos = transformAffine.forwardRound(pos);
+	if (tpos.x >= 0 && tpos.y >= 0 && tpos.x < float(image.Size().x) && tpos.y < float(image.Size().y))
+	{
+		PrepareImageForSW(image);
+		return image.Pixel(tpos);
+	}
+	else
+		return failcol;
+}
+
+void olc::Draw::SetPixel(olc::Image& image, const olc::vf2d& pos, const olc::Pixel col)
+{
+	// Check if in bounds
+	olc::vf2d tpos = transformAffine.forwardRound(pos);
+	if (tpos.x >= 0 && tpos.y >= 0 && tpos.x < float(pTarget->Size().x) && tpos.y < float(pTarget->Size().y))
+	{
+		PrepareImageForSW(image);
+		pTarget->Pixel(tpos) = col;
+	}
+}
+
+olc::Pixel olc::Draw::GetPixel(const olc::vf2d& pos, const olc::Pixel failcol)
+{	
+	return GetPixel(GetTarget(), pos, failcol);
+}
+
+void olc::Draw::SetPixel(const olc::vf2d& pos, const olc::Pixel col)
+{
+	SetPixel(GetTarget(), pos, col);
+}
+
+olc::Pixel olc::Draw::GetRawPixel(olc::Image& image, const olc::vi2d& pos, const olc::Pixel failcol)
+{
+	if (pos.x >= 0 && pos.y >= 0 && pos.x < float(image.Size().x) && pos.y < float(image.Size().y))
+	{
+		PrepareImageForSW(image);
+		return image.Pixel(pos);
+	}
+	else
+		return failcol;
+}
+
+void olc::Draw::SetRawPixel(olc::Image& image, const olc::vi2d& pos, const olc::Pixel col)
+{
+	if (pos.x >= 0 && pos.y >= 0 && pos.x < float(image.Size().x) && pos.y < float(image.Size().y))
+	{
+		PrepareImageForSW(image);
+		image.Pixel(pos) = col;
+	}
+}
+
+olc::Pixel olc::Draw::GetRawPixel(const olc::vi2d& pos, const olc::Pixel failcol)
+{
+	return GetRawPixel(GetTarget(), pos, failcol);
+}
+
+void olc::Draw::SetRawPixel(const olc::vi2d& pos, const olc::Pixel col)
+{
+	SetRawPixel(GetTarget(), pos, col);
+}
+
+olc::Pixel olc::Draw::GetUnsafeRawPixel(olc::Image& image, const olc::vi2d& pos)
 {
 	PrepareImageForSW(image);
 	return image.Pixel(pos);
 }
 
-olc::Pixel olc::Draw::GetPixel(const olc::vf2d& pos)
+void olc::Draw::SetUnsafeRawPixel(olc::Image& image, const olc::vi2d& pos, const olc::Pixel col)
 {
-	PrepareImageForSW(GetTarget());
-	return GetTarget().Pixel(pos);
+	PrepareImageForSW(image);
+	image.Pixel(pos) = col;
+}
+
+olc::Pixel olc::Draw::GetUnsafeRawPixel(const olc::vi2d& pos)
+{
+	return GetUnsafeRawPixel(GetTarget(), pos);
+}
+
+void olc::Draw::SetUnsafeRawPixel(const olc::vi2d& pos, const olc::Pixel col)
+{
+	SetUnsafeRawPixel(GetTarget(), pos, col);
 }
 
 void olc::Draw::Clear(const olc::Pixel& col)
@@ -23439,7 +24142,7 @@ const ImageBatch& olc::Draw::ImageRect(olc::ImageBatch& batch, olc::ImageRegion 
 #define PGE_DRAW_IMPLEMENTED 1
 #endif
 
-#if defined(OLC_PGE3_APPLICATION) && !defined(PGE_CORE_IMPLEMENTED)
+#if defined(OLC_PGE3_APPLICATION) && !defined(PGE_CORE_IMPLEMENTED) && !defined(OLC_USE_WXWIDGETS)
 namespace olc
 {
 	PGEWindow::PGEWindow() : Window(), draw()
@@ -23557,6 +24260,7 @@ namespace olc
 			// fit within the window client area
 			float fAspectScreen = float(GetScreen().Size().x) / float(GetScreen().Size().y);
 
+			
 			vViewSize.x = (int32_t)vWindowSize.x;
 			vViewSize.y = (int32_t)((float)vViewSize.x / fAspectScreen);
 
@@ -24092,19 +24796,13 @@ namespace olc
 #if defined(OLC_PGE3_APPLICATION) && !defined(PGE_IMAGE_IMPLEMENTED)
 namespace olc
 {
-	/*Image::Image(const olc::vi2d& size, const ImageConfig& cfg)
-	{
-	}
-
-	Image::~Image()
-	{
-	}*/
 
 	bool Image::CreateNoGPU(const olc::vi2d& size, const ImageConfig& cfg)
 	{
 		dimensions = size;
 		config = cfg;
 		pixels.resize(dimensions.area(), olc::Colour::TANGERINE);
+		BindCPU();
 		return true;
 	}
 
@@ -24167,6 +24865,11 @@ namespace olc
 		return onCPU;
 	}
 
+	olc::ImageRegion Image::all()
+	{
+		return olc::ImageRegion(*this);
+	}
+
 	olc::ImageRegion Image::region(const olc::vf2d pos, const olc::vf2d& size)
 	{
 		return region(pos, { pos.x + size.x, pos.y }, { pos.x, pos.y + size.y }, pos + size);
@@ -24210,7 +24913,11 @@ namespace olc
 {
 	namespace pgeguts
 	{
+#if defined(OLC_USE_WXWIDGETS)
+		void CreateClassicFont(olc::wx::PGE3Core* pge)
+#else
 		void CreateClassicFont(olc::PGEWindow* pge)
+#endif
 		{
 			std::string data = 
 				"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
@@ -24670,7 +25377,7 @@ namespace olc::hw
 #define PGE_HW_TOUCH_IMPLEMENTED 1
 #endif
 
-#if defined(OLC_PGE3_APPLICATION) && !defined(PGE_WINDOW_IMPLEMENTED)
+#if defined(OLC_PGE3_APPLICATION) && !defined(PGE_WINDOW_IMPLEMENTED) && !defined(OLC_USE_WXWIDGETS)
 namespace olc
 {
 	Window::Window()
