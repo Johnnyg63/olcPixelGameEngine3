@@ -975,6 +975,11 @@ namespace olc
 			const olc::Pixel tint = olc::Colour::WHITE,
 			const bool constrain = true,
 			const bool looped = false);
+
+		GPUTask TaskDrawPoints(
+			const std::vector<olc::vf2d>& vPoints,
+			const std::vector<olc::Pixel>& vColours,
+			const olc::Pixel tint = olc::Colour::WHITE);
 		
 		GPUTask TaskDrawPolygon(
 			olc::Structure structure,
