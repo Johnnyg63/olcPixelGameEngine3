@@ -2385,6 +2385,7 @@ namespace olc
 		olc::ImageRegion region(const olc::vf2d& vTL, const olc::vf2d& vTR, const olc::vf2d& vBL, const olc::vf2d& vBR);
 		olc::ImageRegion flipV();
 		olc::ImageRegion flipH();
+		olc::ImageRegion flipD();
 
 	public: // Make friendly private later
 		void BindGPU();
@@ -3454,7 +3455,7 @@ namespace olc
 		// Draws a string at specified location in monospace font
 		const GPUTask& String(
 			const olc::vf2d& pos,
-			const std::string& text, 
+			std::string_view text, 
 			const olc::Pixel col = olc::Colour::WHITE,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
@@ -3462,14 +3463,14 @@ namespace olc
 		// Draws a string at specified location in proportional font
 		const GPUTask& StringProp(
 			const olc::vf2d& pos,
-			const std::string& text,
+			std::string_view text,
 			const olc::Pixel col = olc::Colour::WHITE,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
 
 		// Returns the bounding box size of a string in pixels
 		olc::vf2d GetTextSize(
-			const std::string& text,
+			std::string_view text,
 			const bool bProportional = false,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
@@ -3651,6 +3652,11 @@ namespace olc
 			const olc::Pixel tint = olc::Colour::WHITE,
 			const bool constrain = true,
 			const bool looped = false);
+
+		GPUTask TaskDrawPoints(
+			const std::vector<olc::vf2d>& vPoints,
+			const std::vector<olc::Pixel>& vColours,
+			const olc::Pixel tint = olc::Colour::WHITE);
 		
 		GPUTask TaskDrawPolygon(
 			olc::Structure structure,
@@ -11822,7 +11828,8 @@ namespace olc::host {
             if (!this->OnSystemThreadStart())
             {
                 // PGE->OnContextStart() failed, or user aborted OnUserCreate()
-                return;
+                StopSystem();
+
             }
 
             // Main system loop
@@ -11858,6 +11865,9 @@ namespace olc::host {
 
     bool Host_Apple_MacOS::StopSystem()
     {
+        // Clear any pending tasks/messages on the main thread
+        bSkipFrame = ExecutePendingMainThreadTasks();
+        
         dispatch_sync(dispatch_get_main_queue(), ^{
             // clean up and close application
             if (pMacOSOpenGLRenderer)
@@ -16704,6 +16714,8 @@ out vec4 oCol;
 R"(
 void main()
 {
+	gl_PointSize = 1.0; // Required for emscripten
+
 	if (pgeDrawType == 2) // 3D																																  
 	{
 		gl_Position = pgeMVP * vec4(aPos.x, aPos.y, aPos.z, 1.0);
@@ -18384,10 +18396,26 @@ GPUTask olc::Draw::TaskDrawLine(const std::vector<olc::vf2d>& vPoints, const olc
 
 }
 
+GPUTask olc::Draw::TaskDrawPoints(const std::vector<olc::vf2d>& vPoints, const std::vector<olc::Pixel>& vColours, const olc::Pixel tint)
+{
+	GPUTask task;
+	task.structure = olc::Structure::Point;
+	task.vertexBuffer.resize(vPoints.size());
+	for (size_t i = 0; i < vPoints.size(); i++)
+	{
+		task.vertexBuffer[i] = { { vPoints[i].x, vPoints[i].y, 1.0f, 1.0f }, vColours[i],{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 } };
+	}
+	task.blendmode = blendMode;
+	task.tint = tint;
+	return task;
+}
+
 GPUTask olc::Draw::TaskDrawPolygon(olc::Structure structure, const std::vector<olc::vf2d>& vPoints, const std::vector<olc::Pixel>& vColours, const olc::Pixel tint)
 {
-	olc_IgnoreUnused(structure);
-	return TaskDrawLine(vPoints, vColours, tint, false, true);
+	if (structure == olc::Structure::Point)
+		return TaskDrawPoints(vPoints, vColours, tint);
+	else
+		return TaskDrawLine(vPoints, vColours, tint, false, true);
 }
 
 GPUTask olc::Draw::TaskDrawPolygon(olc::Structure structure, const std::vector<olc::vf2d>& vPoints, const olc::Pixel colour, const olc::Pixel tint)
@@ -18936,7 +18964,7 @@ const GPUTask& olc::Draw::TexturedPolygon(const olc::Structure structure, const 
 		)));
 }
 
-const GPUTask& olc::Draw::String(const olc::vf2d& pos, const std::string& text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
+const GPUTask& olc::Draw::String(const olc::vf2d& pos, std::string_view text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
 {
 	PrepareTargetForHW();
 
@@ -18967,7 +18995,7 @@ const GPUTask& olc::Draw::String(const olc::vf2d& pos, const std::string& text, 
 	return Batch(task);
 }
 
-const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, const std::string& text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
+const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, std::string_view text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
 {
 	PrepareTargetForHW();
 
@@ -18997,7 +19025,7 @@ const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, const std::string& te
 	return Batch(task);
 }
 
-olc::vf2d olc::Draw::GetTextSize(const std::string& text, const bool bProportional, const olc::vf2d& scale, olc::Font& font)
+olc::vf2d olc::Draw::GetTextSize(std::string_view text, const bool bProportional, const olc::vf2d& scale, olc::Font& font)
 {	
 	olc::vf2d size = { 0, font.fLineHeight * scale.y };
 	olc::vf2d pos = { 0, font.fLineHeight * scale.y };
@@ -20665,6 +20693,11 @@ namespace olc
 	olc::ImageRegion Image::flipH()
 	{
 		return region({ 0,0 }, this->Size()).flipH();
+	}
+
+	olc::ImageRegion Image::flipD()
+	{		
+		return olc::ImageRegion(*this, { 0,0 }, { 0,1 }, { 1, 0 }, { 1,1 });
 	}
 
 	void Image::BindGPU()
