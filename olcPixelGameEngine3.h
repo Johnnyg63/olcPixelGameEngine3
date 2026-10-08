@@ -3455,7 +3455,7 @@ namespace olc
 		// Draws a string at specified location in monospace font
 		const GPUTask& String(
 			const olc::vf2d& pos,
-			const std::string& text, 
+			std::string_view text, 
 			const olc::Pixel col = olc::Colour::WHITE,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
@@ -3463,14 +3463,14 @@ namespace olc
 		// Draws a string at specified location in proportional font
 		const GPUTask& StringProp(
 			const olc::vf2d& pos,
-			const std::string& text,
+			std::string_view text,
 			const olc::Pixel col = olc::Colour::WHITE,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
 
 		// Returns the bounding box size of a string in pixels
 		olc::vf2d GetTextSize(
-			const std::string& text,
+			std::string_view text,
 			const bool bProportional = false,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
@@ -18960,7 +18960,7 @@ const GPUTask& olc::Draw::TexturedPolygon(const olc::Structure structure, const 
 		)));
 }
 
-const GPUTask& olc::Draw::String(const olc::vf2d& pos, const std::string& text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
+const GPUTask& olc::Draw::String(const olc::vf2d& pos, std::string_view text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
 {
 	PrepareTargetForHW();
 
@@ -18991,7 +18991,7 @@ const GPUTask& olc::Draw::String(const olc::vf2d& pos, const std::string& text, 
 	return Batch(task);
 }
 
-const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, const std::string& text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
+const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, std::string_view text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
 {
 	PrepareTargetForHW();
 
@@ -19021,7 +19021,7 @@ const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, const std::string& te
 	return Batch(task);
 }
 
-olc::vf2d olc::Draw::GetTextSize(const std::string& text, const bool bProportional, const olc::vf2d& scale, olc::Font& font)
+olc::vf2d olc::Draw::GetTextSize(std::string_view text, const bool bProportional, const olc::vf2d& scale, olc::Font& font)
 {	
 	olc::vf2d size = { 0, font.fLineHeight * scale.y };
 	olc::vf2d pos = { 0, font.fLineHeight * scale.y };
