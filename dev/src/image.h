@@ -82,6 +82,13 @@ namespace olc
 		bool BoundToGPU() const;
 		bool BoundToCPU() const;
 
+
+		// SW Renderer IFace
+		bool set(int x, int y, olc::Pixel p);
+		olc::Pixel get(int x, int y);
+		int width();
+		int height();
+
 	public:
 		olc::ImageRegion all();
 		olc::ImageRegion region(const olc::vf2d pos, const olc::vf2d& size);
