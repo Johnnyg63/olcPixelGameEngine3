@@ -92,15 +92,15 @@ public:
 
 		
 
-
+		float fTotal = float(TotalTimeElapsed());
 
 		DrawSW.WorldOffset({ 68, 68 });
-		DrawSW.WorldRotate(TotalTimeElapsed(), { 0 ,0 });
+		DrawSW.WorldRotate(fTotal, { 0 ,0 });
 		DrawSW.FilledRect({ -16, -16 }, { 32, 32 }, olc::Colour::BLACK);
 		
 		DrawSW.WorldReset();
 		DrawSW.WorldOffset({ 64, 64 });
-		DrawSW.WorldRotate(TotalTimeElapsed(), { 0 ,0 });
+		DrawSW.WorldRotate(fTotal, { 0 ,0 });
 		DrawSW.FilledRect({ -16, -16 }, { 32, 32 },
 			olc::Colour::RED, olc::Colour::YELLOW,
 			olc::Colour::GREEN, olc::Colour::MAGENTA);
@@ -110,13 +110,13 @@ public:
 
 		DrawSW.WorldReset();
 		DrawSW.WorldOffset({ 128, 68 });
-		DrawSW.WorldRotate(TotalTimeElapsed(), { 0 ,0 });
+		DrawSW.WorldRotate(fTotal, { 0 ,0 });
 		DrawSW.WorldScale({ 2, 2 });
 		DrawSW.FilledRect({ -16, -16 }, { 32, 32 }, olc::Colour::BLACK);
 
 		DrawSW.WorldReset();
 		DrawSW.WorldOffset({ 124, 64 });
-		DrawSW.WorldRotate(TotalTimeElapsed(), { 0 ,0 });
+		DrawSW.WorldRotate(fTotal, { 0 ,0 });
 		DrawSW.WorldScale({ 2, 2 });
 		DrawSW.TexturedRect({ -16, -16 }, { 32, 32 },
 			imgTest);

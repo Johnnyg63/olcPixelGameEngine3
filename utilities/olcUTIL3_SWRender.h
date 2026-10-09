@@ -141,7 +141,7 @@ namespace olc::utils
 
 		bool Plot(const olc::vi2d& pos, const T& element)
 		{
-			const auto vTransformedPoints = transformAffine.forward<float>(pos);
+			const olc::vi2d vTransformedPoints = transformAffine.forward<float>(pos);
 			return PlotRaw(vTransformedPoints.x, vTransformedPoints.y, element);
 		}
 
@@ -165,8 +165,8 @@ namespace olc::utils
 		{
 			const auto vTransformedPoints = transformAffine.forward<float>({ p1, p2 });
 			swRasterShadedLine(
-				vTransformedPoints[0],
-				vTransformedPoints[1],
+				olc::vi2d(vTransformedPoints[0]),
+				olc::vi2d(vTransformedPoints[1]),
 				element, element);
 		}
 
@@ -174,8 +174,8 @@ namespace olc::utils
 		{
 			const auto vTransformedPoints = transformAffine.forward<float>({ p1, p2 });
 			swRasterShadedLine(
-				vTransformedPoints[0],
-				vTransformedPoints[1],
+				olc::vi2d(vTransformedPoints[0]),
+				olc::vi2d(vTransformedPoints[1]),
 				element1, element2);
 		}
 
@@ -229,14 +229,14 @@ namespace olc::utils
 
 			// Fallback to general case rasteriser, where we split into two triangles
 			swRasterShadedTriangle(
-				vTransformedPoints[0],
-				vTransformedPoints[1],
-				vTransformedPoints[2],
+				olc::vi2d(vTransformedPoints[0]),
+				olc::vi2d(vTransformedPoints[1]),
+				olc::vi2d(vTransformedPoints[2]),
 				colTL, colTR, colBR);
 			swRasterShadedTriangle(
-				vTransformedPoints[0],
-				vTransformedPoints[2],
-				vTransformedPoints[3],
+				olc::vi2d(vTransformedPoints[0]),
+				olc::vi2d(vTransformedPoints[2]),
+				olc::vi2d(vTransformedPoints[3]),
 				colTL, colBR, colBL);
 		}
 
@@ -259,15 +259,15 @@ namespace olc::utils
 				});
 
 			swRasterTexturedTriangle(
-				vTransformedPoints[0],
-				vTransformedPoints[1],
-				vTransformedPoints[2],
+				olc::vi2d(vTransformedPoints[0]),
+				olc::vi2d(vTransformedPoints[1]),
+				olc::vi2d(vTransformedPoints[2]),
 				colTL, colTR, colBR, 
 				t1, t2, t3, texture);
 			swRasterTexturedTriangle(
-				vTransformedPoints[0],
-				vTransformedPoints[2],
-				vTransformedPoints[3],
+				olc::vi2d(vTransformedPoints[0]),
+				olc::vi2d(vTransformedPoints[2]),
+				olc::vi2d(vTransformedPoints[3]),
 				colTL, colBR, colBL,
 				t1, t3, t4, texture);
 		}
@@ -294,9 +294,9 @@ namespace olc::utils
 		{
 			const auto vTransformedPoints = transformAffine.forward<float>({ p1, p2, p3 });
 			swRasterShadedTriangle(
-				vTransformedPoints[0],
-				vTransformedPoints[1],
-				vTransformedPoints[2],
+				olc::vi2d(vTransformedPoints[0]),
+				olc::vi2d(vTransformedPoints[1]),
+				olc::vi2d(vTransformedPoints[2]),
 				c1, c2, c3);
 		}
 
@@ -304,9 +304,9 @@ namespace olc::utils
 		{
 			const auto vTransformedPoints = transformAffine.forward<float>({ p1, p2, p3 });
 			swRasterTexturedTriangle(
-				vTransformedPoints[0],
-				vTransformedPoints[1],
-				vTransformedPoints[2],
+				olc::vi2d(vTransformedPoints[0]),
+				olc::vi2d(vTransformedPoints[1]),
+				olc::vi2d(vTransformedPoints[2]),
 				c1, c2, c3,
 				t1, t2, t3,
 				texture);
@@ -315,8 +315,8 @@ namespace olc::utils
 
 		void Circle(const olc::vf2d& p, float radius, const T& element, uint8_t mask = 0xFF)
 		{
-			const olc::vf2d vTransformedPoint = transformAffine.forwardRound<float>(p);
-			const float fTransformedRadius = transformAffine.scale().x * radius;
+			const olc::vi2d vTransformedPoint = transformAffine.forwardRound<float>(p);
+			const int fTransformedRadius = int(transformAffine.scale().x * radius);
 
 			if (fTransformedRadius < 0 
 				|| vTransformedPoint.x < -fTransformedRadius
@@ -359,8 +359,8 @@ namespace olc::utils
 
 		void FilledCircle(const olc::vf2d& p, float radius, const T& element)
 		{ 
-			const olc::vf2d vTransformedPoint = transformAffine.forwardRound<float>(p);
-			const float fTransformedRadius = transformAffine.scale().x * radius;
+			const olc::vi2d vTransformedPoint = transformAffine.forwardRound<float>(p);
+			const int fTransformedRadius = int(transformAffine.scale().x * radius);
 
 			if (fTransformedRadius < 0
 				|| vTransformedPoint.x < -fTransformedRadius
@@ -484,7 +484,7 @@ namespace olc::utils
 			olc::vf2d clipped_p2 = v2;
 
 			float w0 = 0, w1 = 1;
-			if (!swClipWeightedLine(clipped_p1, clipped_p2, { 0,0 }, olc::vf2d(pTarget->width(), pTarget->height()), w0, w1))
+			if (!swClipWeightedLine(clipped_p1, clipped_p2, { 0,0 }, olc::vf2d(float(pTarget->width()), float(pTarget->height())), w0, w1))
 				return;
 
 			// Move to integer space
@@ -620,8 +620,8 @@ namespace olc::utils
 					b2 = scanline.fBaryMin[2] + (-xStart * b2_step);
 				}
 
-				float w =  texture.width();
-				float h = texture.height();
+				float w = float(texture.width());
+				float h = float(texture.height());
 
 				for (int32_t x = x_min; x < x_max; x++)
 				{
@@ -631,7 +631,7 @@ namespace olc::utils
 						b0 * t1.x + b1 * t2.x + b2 * t3.x,
 						b0 * t1.y + b1 * t2.y + b2 * t3.y);
 
-					PlotRaw(x, y, texture.get(float(uv.x) * w, float(uv.y) * h));
+					PlotRaw(x, y, texture.get(int(uv.x * w), int(uv.y * h)));
 					b0 += b0_step;
 					b1 += b1_step;
 					b2 += b2_step;
