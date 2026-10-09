@@ -72,6 +72,37 @@ namespace olc
 		return onCPU;
 	}
 
+	bool Image::set(int x, int y, olc::Pixel p)
+	{
+		if (x >= 0 && y >= 0 && x < dimensions.x && y < dimensions.y)
+		{
+			pixels[int(y) * dimensions.x + int(x)] = p;
+			return true;
+		}
+		else
+			return false;
+	}
+
+	olc::Pixel Image::get(int x, int y)
+	{
+		if (x >= 0 && y >= 0 && x < dimensions.x && y < dimensions.y)
+		{
+			return pixels[int(y) * dimensions.x + int(x)];
+		}
+		else
+			return olc::Colour::BLACK;
+	}
+
+	int Image::width()
+	{
+		return dimensions.x;
+	}
+
+	int Image::height()
+	{
+		return dimensions.y;
+	}
+
 	olc::ImageRegion Image::all()
 	{
 		return olc::ImageRegion(*this);

@@ -201,6 +201,9 @@
     <ClInclude Include="..\..\extensions\miniaudio\olcPGEX3_Miniaudio.h">
       <Filter>Extensions\MiniAudio</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\utilities\olcUTIL3_SWRender.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\core.cpp">
