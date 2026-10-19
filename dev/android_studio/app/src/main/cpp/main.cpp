@@ -65,6 +65,30 @@ public:
 		// Successful frame
 		return true;
 	}
+
+	void OnSaveStateRequested() override
+	{
+		// Apple iOS and Android only
+		// Fires when the OS is about to put your game into pause mode
+		// You have, at best 30 Seconds before your game will be fully shutdown
+		// It depends on why the OS is pausing your game tho, Phone call, etc
+		// It is best to save a simple Struct of your settings, i.e. current level, player position etc
+		// NOTE: The OS can terminate all of your data, pointers, sprites, layers can be freed
+		// Therefore do not save sprites, pointers etc
+		int pause = 0;
+
+	}
+
+	void OnResumeStateRequested() override
+	{
+		// Apple iOS and Android only
+		// This will fire every time your game launches
+		// OnUserCreate will be fired again as the OS may have terminated all your data
+		int restart = 0;
+
+	}
+
+
 };
 
 
