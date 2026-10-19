@@ -107,8 +107,19 @@
 	and the many community contributors that have provided bug fixes, suggestions,
 	criticisms, and encouragement from the OneLoneCoder Discord server, YouTube & GitHub.
 
+	Additional Contributors
+	~~~~~~~~~~~~~~~~~~~~~~~
+	tgd20, MrB, AMay, Moon President, Samuel, fyre, Technicjelle, cstd, kevlin, Desp4,
+	lalaoopybee, codlivion, kimoisune, maltecc
+
 	Saladin, if you're out there, I know you would have been a proud contributer to this.
 	I miss you buddy.
+
+
+	olcCodeJam 2026 - Beta Testers - Big Thanks! (itch account names shown)
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	KrossX, Zalambdodont, mgnooj, bblodget, bootsec, tgd20, AJSquirrel, Linh, pm1001
+	tobiasrox, mitchdev1, u2084511felix, BenKyd, Beefpants, objectname, MrB, raoul632
 
 	Version History
 	~~~~~~~~~~~~~~~
@@ -3949,6 +3960,40 @@ namespace olc
 			// Set keyboard layout for glyph mapping
 			void UseKeyboardLayout(const olc::KeyboardLayout kbl);
 
+		public: // Text Entry Interface
+
+			// Text is handled differently to keyboard input, but is fundamentally
+			// driven by keyboard input (or at least events that smell like a keyboard)
+			//
+			// To use, EnableTextEntry() which then starts to accumulate keyboard 
+			// input from OS. A cursor is also maintained that can be moved with
+			// left and right arrow keys, and delete and backspace work as expected.
+			//
+			// When the user presses a delimiter key (e.g. enter), the current text
+			// input is added to a command buffer the user can interrogate. This
+			// method is used because some 3rd party device drivers may leverage
+			// keyboard input to do other interesting things like barcode readers.
+			//
+			// Being in Text entry mode does not prohibit normal keyboard behaviour
+			// so endure your application handles keyboard input appropriately.
+			//
+			// Leaving TextEntryMode happens automatically when delimiter encountered
+
+			// Enter Text Entry Mode
+			void EnableTextEntry(const std::string_view sDefault = "", const std::string_view delim = "\n", const bool bLeaveMode = true);
+			// Leave Text Entry Mode
+			void DisableTextEntry();
+			// Is TextEntryMode enabled?
+			bool TextEntryEnabled() const;
+			// Get the current accumulated text input
+			const std::string& GetCurrentText() const;
+			// Get the current cursor position within the input string
+			int32_t GetTextCursorPosition() const;
+			// Get a RO vector of current commands
+			const std::vector<std::string>& GetTextCommands() const;
+			// User must clear accumulated commands when appropriate
+			void ClearTextCommands();
+
 		private:
 			// Set key state from system keycode
 			void SetKey(const olc::Key key, bool state);
@@ -3967,6 +4012,13 @@ namespace olc
 			// autotyped by the OS repeat rate or peripheral
 			std::array<std::vector<olc::Key>, 2> keyCache{};
 			size_t nKeyCacheIndex = 0;
+
+			bool bTextEntryMode = false;
+			std::string sTextEntryString = "";
+			int32_t nTextEntryCursorPos = 0;
+			std::vector<std::string> vecTextEntryCommands;
+			std::string sTextEntryDelim = "\n";
+			bool bLeaveTextEntryModeUponDelimiter = true;
 
 			// Map of olc::Keycodes to printable glyphs
 			struct sKeyGlyph
@@ -4383,12 +4435,15 @@ namespace olc
 		virtual bool OnUserUpdate(float fElapsedTime);
 		// Return true if window is to close
 		virtual bool OnUserDestroy();
-		// Called when the application is requested to save its state; mostly used on mobile platforms
-		virtual void OnSaveStateRequested();
-		// Called when the application is requested to resume its state; mostly used on mobile platforms
-		virtual void OnResumeStateRequested();
-		
 	
+		// Apple iOS and Android only
+#if OLC_HOST == OLC_HOST_ANDROID || OLC_HOST == OLC_HOST_IOS
+		// Called when the application is requested to save its state
+		virtual void OnSaveStateRequested();
+		// Called when the application is requested to resume its state
+		virtual void OnResumeStateRequested();
+#endif
+
 	public:	// olc::Image Handling
 
 		// These are the preferred  methods to create olc::Image objects
@@ -20023,6 +20078,7 @@ namespace olc
 		return true;
 	}
 
+#if OLC_HOST == OLC_HOST_ANDROID || OLC_HOST == OLC_HOST_IOS
 	void PGEWindow::OnSaveStateRequested()
 	{
 		return;
@@ -20032,7 +20088,7 @@ namespace olc
 	{
 		return;
 	}
-
+#endif // OLC_HOST == OLC_HOST_ANDROID || OLC_HOST == OLC_HOST_IOS
 	bool PGEWindow::olc_WindowUpdate(const float fElapsedTime, const float fTotalElapsedTime)
 	{
 		float fDT = fElapsedTime;
@@ -21154,6 +21210,46 @@ namespace olc::hw
         }
     }
 
+    void Keyboard::EnableTextEntry(const std::string_view sDefault, const std::string_view delim, const bool bLeaveMode)
+    {
+        sTextEntryString = sDefault;
+        vecTextEntryCommands.clear();
+        sTextEntryDelim = delim;
+        nTextEntryCursorPos = uint32_t(sTextEntryString.size());
+        bTextEntryMode = true;
+        bLeaveTextEntryModeUponDelimiter = bLeaveMode;
+    }
+
+    void Keyboard::DisableTextEntry()
+    {                              
+        bTextEntryMode = false;
+    }
+
+    bool Keyboard::TextEntryEnabled() const
+    {
+        return bTextEntryMode;
+    }
+
+    const std::string& Keyboard::GetCurrentText() const
+    {
+        return sTextEntryString;
+    }
+
+    int32_t Keyboard::GetTextCursorPosition() const
+    {
+        return nTextEntryCursorPos;
+    }
+
+    const std::vector<std::string>& Keyboard::GetTextCommands() const
+    {
+        return vecTextEntryCommands;
+    }
+
+    void Keyboard::ClearTextCommands()
+    {
+        vecTextEntryCommands.clear();
+    }
+
     const Button& Keyboard::GetKey(const olc::Key key) const
     {
 		return keys.at(size_t(key));
@@ -21189,6 +21285,55 @@ namespace olc::hw
         if (state)
         {
             keyCache[nKeyCacheIndex].push_back(key);
+
+            // Process Text entry
+            if (bTextEntryMode)
+            {
+                const auto& sym = GetKeyGlyph(key, GetKey(olc::Key::SHIFT).bHeld, GetKey(olc::Key::CTRL).bHeld);
+
+
+                // Check for command characters
+                if (sym == "_L") // Left
+                    nTextEntryCursorPos = std::max(0, nTextEntryCursorPos - 1);
+                else if (sym == "_R") // Right
+                    nTextEntryCursorPos = std::min(int32_t(sTextEntryString.size()), nTextEntryCursorPos + 1);
+                else if (sym == "\b") // Backspace
+                {
+                    // Still need 'back' to be consumed
+                    if (nTextEntryCursorPos > 0)
+                    {
+                        sTextEntryString.erase(nTextEntryCursorPos - 1, 1);
+                        nTextEntryCursorPos = std::max(0, nTextEntryCursorPos - 1);
+                    }
+                }
+                else if (sym == "_X" && size_t(nTextEntryCursorPos) < sTextEntryString.size()) // Del
+                {
+                    sTextEntryString.erase(nTextEntryCursorPos, 1);
+                }
+                /*else if (sym == "_U")
+                {
+               
+                }
+                else if (sym == "_D")
+                {
+
+                }*/
+                else if (sym == sTextEntryDelim)
+                {
+                    vecTextEntryCommands.push_back(sTextEntryString);
+                    sTextEntryString.clear();
+                    nTextEntryCursorPos = 0;
+                    if(bLeaveTextEntryModeUponDelimiter)
+                        DisableTextEntry();
+                }
+                else if (sym.size() == 1)
+                {
+                    sTextEntryString.insert(nTextEntryCursorPos, sym);
+                    nTextEntryCursorPos++;
+                }
+
+
+            }
         }
 	}
 
@@ -21220,6 +21365,7 @@ namespace olc::hw
 
         // Swap active cache index
         nKeyCacheIndex ^= 0x01;
+
     }
 }
 #define PGE_HW_KEYBOARD_IMPLEMENTED 1
