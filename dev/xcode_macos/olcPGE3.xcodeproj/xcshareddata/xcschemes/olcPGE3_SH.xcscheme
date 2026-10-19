@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2630"
+   LastUpgradeVersion = "1640"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4610524630593E6D00C2BC3A"
+               BlueprintIdentifier = "46C2B2022F4CB7130014FDD2"
                BuildableName = "olcPGE3_SH"
                BlueprintName = "olcPGE3_SH"
                ReferencedContainer = "container:olcPGE3.xcodeproj">
@@ -39,13 +39,14 @@
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
+      enableGPUValidationMode = "1"
       allowLocationSimulation = "YES"
       viewDebuggingEnabled = "No">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4610524630593E6D00C2BC3A"
+            BlueprintIdentifier = "46C2B2022F4CB7130014FDD2"
             BuildableName = "olcPGE3_SH"
             BlueprintName = "olcPGE3_SH"
             ReferencedContainer = "container:olcPGE3.xcodeproj">
@@ -62,7 +63,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4610524630593E6D00C2BC3A"
+            BlueprintIdentifier = "46C2B2022F4CB7130014FDD2"
             BuildableName = "olcPGE3_SH"
             BlueprintName = "olcPGE3_SH"
             ReferencedContainer = "container:olcPGE3.xcodeproj">
