@@ -107,6 +107,16 @@ namespace olc
 		return true;
 	}
 
+	void PGEWindow::OnSaveStateRequested()
+	{
+		return;
+	}
+
+	void PGEWindow::OnResumeStateRequested()
+	{
+		return;
+	}
+
 	bool PGEWindow::olc_WindowUpdate(const float fElapsedTime, const float fTotalElapsedTime)
 	{
 		float fDT = fElapsedTime;

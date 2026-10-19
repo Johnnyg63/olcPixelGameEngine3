@@ -9,7 +9,7 @@
 // Define OLC_PGE3_APPLICATION to include the implementation of 
 // the Pixel Game Engine as part of this translation unit
 #define OLC_PGE3_APPLICATION
-#include "olcPixelGameEngine3.h"
+#include "../../../../../../olcPixelGameEngine3.h"
 
 // Example application demonstrating various line drawing. This class
 // overrides the olc::PixelGameEngine base class by implementing

@@ -90,6 +90,10 @@ namespace olc
 		virtual bool OnUserUpdate(float fElapsedTime);
 		// Return true if window is to close
 		virtual bool OnUserDestroy();
+		// Called when the application is requested to save its state; mostly used on mobile platforms
+		virtual void OnSaveStateRequested();
+		// Called when the application is requested to resume its state; mostly used on mobile platforms
+		virtual void OnResumeStateRequested();
 		
 	
 	public:	// olc::Image Handling
