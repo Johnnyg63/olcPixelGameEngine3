@@ -2379,6 +2379,13 @@ namespace olc
 		bool BoundToGPU() const;
 		bool BoundToCPU() const;
 
+
+		// SW Renderer IFace
+		bool set(int x, int y, olc::Pixel p);
+		olc::Pixel get(int x, int y);
+		int width();
+		int height();
+
 	public:
 		olc::ImageRegion all();
 		olc::ImageRegion region(const olc::vf2d pos, const olc::vf2d& size);
@@ -4376,6 +4383,10 @@ namespace olc
 		virtual bool OnUserUpdate(float fElapsedTime);
 		// Return true if window is to close
 		virtual bool OnUserDestroy();
+		// Called when the application is requested to save its state; mostly used on mobile platforms
+		virtual void OnSaveStateRequested();
+		// Called when the application is requested to resume its state; mostly used on mobile platforms
+		virtual void OnResumeStateRequested();
 		
 	
 	public:	// olc::Image Handling
@@ -4419,6 +4430,7 @@ namespace olc
 	protected:
 		bool olc_OnMouseMove(const olc::vi2d& vMousePos) override;
 		bool olc_OnTouch(const uint32_t nID, const olc::vf2d& vPos, const bool bPress, const bool bRelease, const olc::vf2d& vSize, const bool stylus = false, const float pressure = 0.0f, const float orientation = 0, const olc::vf2d& tilt = { 0,0 }) override;
+		bool olc_OnWindowSize(const olc::vi2d& vSize) override;
 
 	public:
 		virtual bool olc_WindowUpdate(const float fElapsedTime, const float fTotalElapsedTime);
@@ -14991,7 +15003,7 @@ namespace olc::host
         if (!host->pgeWindow) return;
 
         switch (cmd) {
-            case APP_CMD_WINDOW_RESIZED:
+            case APP_CMD_WINDOW_RESIZED:{
                 host->pgeWindow->olc_OnWindowSize({
                   ANativeWindow_getWidth(app->window),
                   ANativeWindow_getHeight(app->window)
@@ -15000,25 +15012,42 @@ namespace olc::host
                       ANativeWindow_getWidth(app->window),
                       ANativeWindow_getHeight(app->window));
                 break;
-            case APP_CMD_INIT_WINDOW:
+            }
+            case APP_CMD_INIT_WINDOW:{
                 if (app->window) {
                     host->initialized = true;
                     LOGD("APP_CMD_INIT_WINDOW received with Window");
                 }
                 break;
+            }
             case APP_CMD_TERM_WINDOW: {
-                host->pgeWindow->olc_OnWindowClose();
-                host->initialized = false;
                 LOGD("APP_CMD_TERM_WINDOW received");
-            } break;
+                if(host){
+                    host->pgeWindow->olc_OnWindowClose();
+                    host->initialized = false;
+                }
+                break;
+            } 
+            case APP_CMD_SAVE_STATE: {
+                LOGD("APP_CMD_SAVE_STATE received");
+                if(pPrimaryPGE) pPrimaryPGE->OnSaveStateRequested();
+                break;
+            }
+            case APP_CMD_RESUME: {
+                LOGD("APP_CMD_RESUME received");
+                if(pPrimaryPGE) pPrimaryPGE->OnResumeStateRequested();
+                break;
+            }
             case APP_CMD_GAINED_FOCUS: {
                 LOGD("APP_CMD_GAINED_FOCUS received");
-                host->pgeWindow->olc_OnFocus(true);
-            } break;
+                if(host)host->pgeWindow->olc_OnFocus(true);
+                break;
+            }
             case APP_CMD_LOST_FOCUS: {
                 LOGD("APP_CMD_LOST_FOCUS received");
-                host->pgeWindow->olc_OnFocus(false);
-            } break;
+                if(host) host->pgeWindow->olc_OnFocus(false);
+                break;
+            } 
             default: break;
         }
     }
@@ -19964,11 +19993,17 @@ namespace olc
 		//pRenderer->RetargetDevice(pHost->GetHostWindowDescriptor(this));
 		pRenderer->PrepareWindowTarget(pHost->GetHostWindowDescriptor(this));
 		CreateImage(GetScreen(), vScreenSize);
-		SetWindowSize(vScreenSize * vPixelSize);
+		
+		olc::vi2d vPS = vPixelSize;
+		if (config.bRealWindow)
+			vPS = { 1,1 };
+		
+
+		SetWindowSize(vScreenSize * vPS);
 
 		// Assume 1:1 Relationship for now
 		vViewPos = { 0,0 };
-		vViewSize = vScreenSize * vPixelSize;
+		vViewSize = vScreenSize * vPS;
 		return true;
 	}
 
@@ -19986,6 +20021,16 @@ namespace olc
 	bool PGEWindow::OnUserDestroy()
 	{
 		return true;
+	}
+
+	void PGEWindow::OnSaveStateRequested()
+	{
+		return;
+	}
+
+	void PGEWindow::OnResumeStateRequested()
+	{
+		return;
 	}
 
 	bool PGEWindow::olc_WindowUpdate(const float fElapsedTime, const float fTotalElapsedTime)
@@ -20270,6 +20315,16 @@ namespace olc
 		return true;
 	}
 
+	bool PGEWindow::olc_OnWindowSize(const olc::vi2d& vSize)
+	{
+		if (config.bRealWindow)
+		{
+			GetScreen().Resize(vSize);
+		}
+
+		return SetWindowSize(vSize);
+	}
+
 
 
 
@@ -20294,8 +20349,12 @@ namespace olc
 	bool PixelGameEngine::Construct(const PGEConfig& cfg)
 	{		
 		config = cfg;
+
+		if (config.bRealWindow)
+			config.vPixelSize = { 1,1 };
+
 		// Also assign the window level config since that is what the Host will see
-		Window::config = cfg;
+		Window::config = config;
 
 		// Check for constructor sAppName, if not set use Config sAppName
 		if (sAppName.empty())
@@ -20673,6 +20732,37 @@ namespace olc
 	bool Image::BoundToCPU() const
 	{
 		return onCPU;
+	}
+
+	bool Image::set(int x, int y, olc::Pixel p)
+	{
+		if (x >= 0 && y >= 0 && x < dimensions.x && y < dimensions.y)
+		{
+			pixels[int(y) * dimensions.x + int(x)] = p;
+			return true;
+		}
+		else
+			return false;
+	}
+
+	olc::Pixel Image::get(int x, int y)
+	{
+		if (x >= 0 && y >= 0 && x < dimensions.x && y < dimensions.y)
+		{
+			return pixels[int(y) * dimensions.x + int(x)];
+		}
+		else
+			return olc::Colour::BLACK;
+	}
+
+	int Image::width()
+	{
+		return dimensions.x;
+	}
+
+	int Image::height()
+	{
+		return dimensions.y;
 	}
 
 	olc::ImageRegion Image::all()

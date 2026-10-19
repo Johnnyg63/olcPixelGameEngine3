@@ -4383,6 +4383,10 @@ namespace olc
 		virtual bool OnUserUpdate(float fElapsedTime);
 		// Return true if window is to close
 		virtual bool OnUserDestroy();
+		// Called when the application is requested to save its state; mostly used on mobile platforms
+		virtual void OnSaveStateRequested();
+		// Called when the application is requested to resume its state; mostly used on mobile platforms
+		virtual void OnResumeStateRequested();
 		
 	
 	public:	// olc::Image Handling
@@ -14999,7 +15003,7 @@ namespace olc::host
         if (!host->pgeWindow) return;
 
         switch (cmd) {
-            case APP_CMD_WINDOW_RESIZED:
+            case APP_CMD_WINDOW_RESIZED:{
                 host->pgeWindow->olc_OnWindowSize({
                   ANativeWindow_getWidth(app->window),
                   ANativeWindow_getHeight(app->window)
@@ -15008,25 +15012,42 @@ namespace olc::host
                       ANativeWindow_getWidth(app->window),
                       ANativeWindow_getHeight(app->window));
                 break;
-            case APP_CMD_INIT_WINDOW:
+            }
+            case APP_CMD_INIT_WINDOW:{
                 if (app->window) {
                     host->initialized = true;
                     LOGD("APP_CMD_INIT_WINDOW received with Window");
                 }
                 break;
+            }
             case APP_CMD_TERM_WINDOW: {
-                host->pgeWindow->olc_OnWindowClose();
-                host->initialized = false;
                 LOGD("APP_CMD_TERM_WINDOW received");
-            } break;
+                if(host){
+                    host->pgeWindow->olc_OnWindowClose();
+                    host->initialized = false;
+                }
+                break;
+            } 
+            case APP_CMD_SAVE_STATE: {
+                LOGD("APP_CMD_SAVE_STATE received");
+                if(pPrimaryPGE) pPrimaryPGE->OnSaveStateRequested();
+                break;
+            }
+            case APP_CMD_RESUME: {
+                LOGD("APP_CMD_RESUME received");
+                if(pPrimaryPGE) pPrimaryPGE->OnResumeStateRequested();
+                break;
+            }
             case APP_CMD_GAINED_FOCUS: {
                 LOGD("APP_CMD_GAINED_FOCUS received");
-                host->pgeWindow->olc_OnFocus(true);
-            } break;
+                if(host)host->pgeWindow->olc_OnFocus(true);
+                break;
+            }
             case APP_CMD_LOST_FOCUS: {
                 LOGD("APP_CMD_LOST_FOCUS received");
-                host->pgeWindow->olc_OnFocus(false);
-            } break;
+                if(host) host->pgeWindow->olc_OnFocus(false);
+                break;
+            } 
             default: break;
         }
     }
@@ -20000,6 +20021,16 @@ namespace olc
 	bool PGEWindow::OnUserDestroy()
 	{
 		return true;
+	}
+
+	void PGEWindow::OnSaveStateRequested()
+	{
+		return;
+	}
+
+	void PGEWindow::OnResumeStateRequested()
+	{
+		return;
 	}
 
 	bool PGEWindow::olc_WindowUpdate(const float fElapsedTime, const float fTotalElapsedTime)
