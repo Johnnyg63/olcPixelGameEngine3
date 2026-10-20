@@ -88,6 +88,13 @@ public:
 
 	}
 
+	void OnLowMemory() override
+	{
+		/// NOTE: Fires when the OS is about to close your app due low memory availability
+		/// Use this method to clean up any resources to reduce your memory usage
+		/// If you can reduce your memory usage enough the OS will automatically cancel the application termination event
+
+	}
 
 };
 
