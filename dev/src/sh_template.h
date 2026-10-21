@@ -302,6 +302,8 @@
 #endif
 
 #if OLC_HOST == OLC_HOST_ANDROID
+//! GRAB android_native_app_glue.c IMPLEMENTATION
+
 //! GRAB host_android.cpp IMPLEMENTATION
 #endif
 
