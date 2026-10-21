@@ -221,6 +221,8 @@
 #endif
 
 #if OLC_HOST == OLC_HOST_ANDROID
+//! GRAB android_native_app_glue.h DECLARATION
+
 //! GRAB host_android.h ANDROID_CONFIG
 
 //! GRAB host_android.h DECLARATION

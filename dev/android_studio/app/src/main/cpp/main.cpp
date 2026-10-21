@@ -66,7 +66,7 @@ public:
 		return true;
 	}
 
-	void OnSaveStateRequested() override
+	void OnUserSaveState() override
 	{
 		// Apple iOS and Android only
 		// Fires when the OS is about to put your game into pause mode
@@ -79,7 +79,7 @@ public:
 
 	}
 
-	void OnResumeStateRequested() override
+	void OnUserResume() override
 	{
 		// Apple iOS and Android only
 		// This will fire every time your game launches
@@ -88,7 +88,7 @@ public:
 
 	}
 
-	void OnLowMemory() override
+	void OnUserLowMemory() override
 	{
 		/// NOTE: Fires when the OS is about to close your app due low memory availability
 		/// Use this method to clean up any resources to reduce your memory usage
