@@ -107,8 +107,19 @@
 	and the many community contributors that have provided bug fixes, suggestions,
 	criticisms, and encouragement from the OneLoneCoder Discord server, YouTube & GitHub.
 
+	Additional Contributors
+	~~~~~~~~~~~~~~~~~~~~~~~
+	tgd20, MrB, AMay, Moon President, Samuel, fyre, Technicjelle, cstd, kevlin, Desp4,
+	lalaoopybee, codlivion, kimoisune, maltecc
+
 	Saladin, if you're out there, I know you would have been a proud contributer to this.
 	I miss you buddy.
+
+
+	olcCodeJam 2026 - Beta Testers - Big Thanks! (itch account names shown)
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	KrossX, Zalambdodont, mgnooj, bblodget, bootsec, tgd20, AJSquirrel, Linh, pm1001
+	tobiasrox, mitchdev1, u2084511felix, BenKyd, Beefpants, objectname, MrB, raoul632
 
 	Version History
 	~~~~~~~~~~~~~~~
@@ -2379,12 +2390,20 @@ namespace olc
 		bool BoundToGPU() const;
 		bool BoundToCPU() const;
 
+
+		// SW Renderer IFace
+		bool set(int x, int y, olc::Pixel p);
+		olc::Pixel get(int x, int y);
+		int width();
+		int height();
+
 	public:
 		olc::ImageRegion all();
 		olc::ImageRegion region(const olc::vf2d pos, const olc::vf2d& size);
 		olc::ImageRegion region(const olc::vf2d& vTL, const olc::vf2d& vTR, const olc::vf2d& vBL, const olc::vf2d& vBR);
 		olc::ImageRegion flipV();
 		olc::ImageRegion flipH();
+		olc::ImageRegion flipD();
 
 	public: // Make friendly private later
 		void BindGPU();
@@ -3454,7 +3473,7 @@ namespace olc
 		// Draws a string at specified location in monospace font
 		const GPUTask& String(
 			const olc::vf2d& pos,
-			const std::string& text, 
+			std::string_view text, 
 			const olc::Pixel col = olc::Colour::WHITE,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
@@ -3462,14 +3481,14 @@ namespace olc
 		// Draws a string at specified location in proportional font
 		const GPUTask& StringProp(
 			const olc::vf2d& pos,
-			const std::string& text,
+			std::string_view text,
 			const olc::Pixel col = olc::Colour::WHITE,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
 
 		// Returns the bounding box size of a string in pixels
 		olc::vf2d GetTextSize(
-			const std::string& text,
+			std::string_view text,
 			const bool bProportional = false,
 			const olc::vf2d& scale = { 1.0f, 1.0f },
 			olc::Font& font = olc::fontClassicPGE);
@@ -3651,6 +3670,11 @@ namespace olc
 			const olc::Pixel tint = olc::Colour::WHITE,
 			const bool constrain = true,
 			const bool looped = false);
+
+		GPUTask TaskDrawPoints(
+			const std::vector<olc::vf2d>& vPoints,
+			const std::vector<olc::Pixel>& vColours,
+			const olc::Pixel tint = olc::Colour::WHITE);
 		
 		GPUTask TaskDrawPolygon(
 			olc::Structure structure,
@@ -3936,6 +3960,40 @@ namespace olc
 			// Set keyboard layout for glyph mapping
 			void UseKeyboardLayout(const olc::KeyboardLayout kbl);
 
+		public: // Text Entry Interface
+
+			// Text is handled differently to keyboard input, but is fundamentally
+			// driven by keyboard input (or at least events that smell like a keyboard)
+			//
+			// To use, EnableTextEntry() which then starts to accumulate keyboard 
+			// input from OS. A cursor is also maintained that can be moved with
+			// left and right arrow keys, and delete and backspace work as expected.
+			//
+			// When the user presses a delimiter key (e.g. enter), the current text
+			// input is added to a command buffer the user can interrogate. This
+			// method is used because some 3rd party device drivers may leverage
+			// keyboard input to do other interesting things like barcode readers.
+			//
+			// Being in Text entry mode does not prohibit normal keyboard behaviour
+			// so endure your application handles keyboard input appropriately.
+			//
+			// Leaving TextEntryMode happens automatically when delimiter encountered
+
+			// Enter Text Entry Mode
+			void EnableTextEntry(const std::string_view sDefault = "", const std::string_view delim = "\n", const bool bLeaveMode = true);
+			// Leave Text Entry Mode
+			void DisableTextEntry();
+			// Is TextEntryMode enabled?
+			bool TextEntryEnabled() const;
+			// Get the current accumulated text input
+			const std::string& GetCurrentText() const;
+			// Get the current cursor position within the input string
+			int32_t GetTextCursorPosition() const;
+			// Get a RO vector of current commands
+			const std::vector<std::string>& GetTextCommands() const;
+			// User must clear accumulated commands when appropriate
+			void ClearTextCommands();
+
 		private:
 			// Set key state from system keycode
 			void SetKey(const olc::Key key, bool state);
@@ -3954,6 +4012,13 @@ namespace olc
 			// autotyped by the OS repeat rate or peripheral
 			std::array<std::vector<olc::Key>, 2> keyCache{};
 			size_t nKeyCacheIndex = 0;
+
+			bool bTextEntryMode = false;
+			std::string sTextEntryString = "";
+			int32_t nTextEntryCursorPos = 0;
+			std::vector<std::string> vecTextEntryCommands;
+			std::string sTextEntryDelim = "\n";
+			bool bLeaveTextEntryModeUponDelimiter = true;
 
 			// Map of olc::Keycodes to printable glyphs
 			struct sKeyGlyph
@@ -4401,6 +4466,7 @@ namespace olc
 		// Input devices are handled by a regular olc::Window, but for convenience...
 		olc::hw::Mouse& GetMouse();
 		olc::hw::Keyboard& GetKeyboard();
+		olc::hw::Touch& GetTouch();
 		
 		// Returns the current size of the "screen" in pixels
 		const olc::vi2d& ScreenSize();
@@ -4412,6 +4478,7 @@ namespace olc
 	protected:
 		bool olc_OnMouseMove(const olc::vi2d& vMousePos) override;
 		bool olc_OnTouch(const uint32_t nID, const olc::vf2d& vPos, const bool bPress, const bool bRelease, const olc::vf2d& vSize, const bool stylus = false, const float pressure = 0.0f, const float orientation = 0, const olc::vf2d& tilt = { 0,0 }) override;
+		bool olc_OnWindowSize(const olc::vi2d& vSize) override;
 
 	public:
 		virtual bool olc_WindowUpdate(const float fElapsedTime, const float fTotalElapsedTime);
@@ -12431,6 +12498,7 @@ namespace olc::host
 				// Notify start of system thread
 				if (!this->OnSystemThreadStart())
 				{
+                    systemActive = false;
 					// PGE->OnContextStart() failed, or user aborted OnUserCreate()
 					return;
 				}
@@ -12633,7 +12701,7 @@ namespace olc::host
             }
 
             // Wait until an event appears on the x11 event queue file descriptor
-            poll(&x11_connection_fd, 1, -1);
+            poll(&x11_connection_fd, 1, 10);
         }
 
         systemActive = false;
@@ -13205,6 +13273,7 @@ namespace olc::host
 				if (!this->OnSystemThreadStart())
 				{
 					// PGE->OnContextStart() failed, or user aborted OnUserCreate()
+                    systemActive = false;
 					return;
 				}
 
@@ -13231,7 +13300,7 @@ namespace olc::host
         bool keep_running = true;
         while(systemActive && keep_running) {
             if(decor_context) {
-                poll(&decor_wl_fd, 1, -1);
+                poll(&decor_wl_fd, 1, 10);
                 {
                     std::lock_guard<std::mutex> l{decor_mutex};
                     keep_running = libdecor_dispatch(decor_context, 0) >= 0;
@@ -16708,6 +16777,8 @@ out vec4 oCol;
 R"(
 void main()
 {
+	gl_PointSize = 1.0; // Required for emscripten
+
 	if (pgeDrawType == 2) // 3D																																  
 	{
 		gl_Position = pgeMVP * vec4(aPos.x, aPos.y, aPos.z, 1.0);
@@ -18388,10 +18459,26 @@ GPUTask olc::Draw::TaskDrawLine(const std::vector<olc::vf2d>& vPoints, const olc
 
 }
 
+GPUTask olc::Draw::TaskDrawPoints(const std::vector<olc::vf2d>& vPoints, const std::vector<olc::Pixel>& vColours, const olc::Pixel tint)
+{
+	GPUTask task;
+	task.structure = olc::Structure::Point;
+	task.vertexBuffer.resize(vPoints.size());
+	for (size_t i = 0; i < vPoints.size(); i++)
+	{
+		task.vertexBuffer[i] = { { vPoints[i].x, vPoints[i].y, 1.0f, 1.0f }, vColours[i],{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 } };
+	}
+	task.blendmode = blendMode;
+	task.tint = tint;
+	return task;
+}
+
 GPUTask olc::Draw::TaskDrawPolygon(olc::Structure structure, const std::vector<olc::vf2d>& vPoints, const std::vector<olc::Pixel>& vColours, const olc::Pixel tint)
 {
-	olc_IgnoreUnused(structure);
-	return TaskDrawLine(vPoints, vColours, tint, false, true);
+	if (structure == olc::Structure::Point)
+		return TaskDrawPoints(vPoints, vColours, tint);
+	else
+		return TaskDrawLine(vPoints, vColours, tint, false, true);
 }
 
 GPUTask olc::Draw::TaskDrawPolygon(olc::Structure structure, const std::vector<olc::vf2d>& vPoints, const olc::Pixel colour, const olc::Pixel tint)
@@ -18940,7 +19027,7 @@ const GPUTask& olc::Draw::TexturedPolygon(const olc::Structure structure, const 
 		)));
 }
 
-const GPUTask& olc::Draw::String(const olc::vf2d& pos, const std::string& text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
+const GPUTask& olc::Draw::String(const olc::vf2d& pos, std::string_view text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
 {
 	PrepareTargetForHW();
 
@@ -18971,7 +19058,7 @@ const GPUTask& olc::Draw::String(const olc::vf2d& pos, const std::string& text, 
 	return Batch(task);
 }
 
-const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, const std::string& text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
+const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, std::string_view text, const olc::Pixel col, const olc::vf2d& scale, olc::Font& font)
 {
 	PrepareTargetForHW();
 
@@ -19001,7 +19088,7 @@ const GPUTask& olc::Draw::StringProp(const olc::vf2d& pos, const std::string& te
 	return Batch(task);
 }
 
-olc::vf2d olc::Draw::GetTextSize(const std::string& text, const bool bProportional, const olc::vf2d& scale, olc::Font& font)
+olc::vf2d olc::Draw::GetTextSize(std::string_view text, const bool bProportional, const olc::vf2d& scale, olc::Font& font)
 {	
 	olc::vf2d size = { 0, font.fLineHeight * scale.y };
 	olc::vf2d pos = { 0, font.fLineHeight * scale.y };
@@ -19937,11 +20024,17 @@ namespace olc
 		//pRenderer->RetargetDevice(pHost->GetHostWindowDescriptor(this));
 		pRenderer->PrepareWindowTarget(pHost->GetHostWindowDescriptor(this));
 		CreateImage(GetScreen(), vScreenSize);
-		SetWindowSize(vScreenSize * vPixelSize);
+		
+		olc::vi2d vPS = vPixelSize;
+		if (config.bRealWindow)
+			vPS = { 1,1 };
+		
+
+		SetWindowSize(vScreenSize * vPS);
 
 		// Assume 1:1 Relationship for now
 		vViewPos = { 0,0 };
-		vViewSize = vScreenSize * vPixelSize;
+		vViewSize = vScreenSize * vPS;
 		return true;
 	}
 
@@ -20198,6 +20291,10 @@ namespace olc
 		return keyboard;
 	}
 
+	olc::hw::Touch& PGEWindow::GetTouch() {
+		return touch;
+	}
+
 	const olc::vi2d& PGEWindow::ScreenSize()
 	{
 		return GetScreen().Size();
@@ -20239,6 +20336,16 @@ namespace olc
 		return true;
 	}
 
+	bool PGEWindow::olc_OnWindowSize(const olc::vi2d& vSize)
+	{
+		if (config.bRealWindow)
+		{
+			GetScreen().Resize(vSize);
+		}
+
+		return SetWindowSize(vSize);
+	}
+
 
 
 
@@ -20263,8 +20370,12 @@ namespace olc
 	bool PixelGameEngine::Construct(const PGEConfig& cfg)
 	{		
 		config = cfg;
+
+		if (config.bRealWindow)
+			config.vPixelSize = { 1,1 };
+
 		// Also assign the window level config since that is what the Host will see
-		Window::config = cfg;
+		Window::config = config;
 
 		// Check for constructor sAppName, if not set use Config sAppName
 		if (sAppName.empty())
@@ -20644,6 +20755,37 @@ namespace olc
 		return onCPU;
 	}
 
+	bool Image::set(int x, int y, olc::Pixel p)
+	{
+		if (x >= 0 && y >= 0 && x < dimensions.x && y < dimensions.y)
+		{
+			pixels[int(y) * dimensions.x + int(x)] = p;
+			return true;
+		}
+		else
+			return false;
+	}
+
+	olc::Pixel Image::get(int x, int y)
+	{
+		if (x >= 0 && y >= 0 && x < dimensions.x && y < dimensions.y)
+		{
+			return pixels[int(y) * dimensions.x + int(x)];
+		}
+		else
+			return olc::Colour::BLACK;
+	}
+
+	int Image::width()
+	{
+		return dimensions.x;
+	}
+
+	int Image::height()
+	{
+		return dimensions.y;
+	}
+
 	olc::ImageRegion Image::all()
 	{
 		return olc::ImageRegion(*this);
@@ -20669,6 +20811,11 @@ namespace olc
 	olc::ImageRegion Image::flipH()
 	{
 		return region({ 0,0 }, this->Size()).flipH();
+	}
+
+	olc::ImageRegion Image::flipD()
+	{		
+		return olc::ImageRegion(*this, { 0,0 }, { 0,1 }, { 1, 0 }, { 1,1 });
 	}
 
 	void Image::BindGPU()
@@ -21028,6 +21175,46 @@ namespace olc::hw
         }
     }
 
+    void Keyboard::EnableTextEntry(const std::string_view sDefault, const std::string_view delim, const bool bLeaveMode)
+    {
+        sTextEntryString = sDefault;
+        vecTextEntryCommands.clear();
+        sTextEntryDelim = delim;
+        nTextEntryCursorPos = uint32_t(sTextEntryString.size());
+        bTextEntryMode = true;
+        bLeaveTextEntryModeUponDelimiter = bLeaveMode;
+    }
+
+    void Keyboard::DisableTextEntry()
+    {                              
+        bTextEntryMode = false;
+    }
+
+    bool Keyboard::TextEntryEnabled() const
+    {
+        return bTextEntryMode;
+    }
+
+    const std::string& Keyboard::GetCurrentText() const
+    {
+        return sTextEntryString;
+    }
+
+    int32_t Keyboard::GetTextCursorPosition() const
+    {
+        return nTextEntryCursorPos;
+    }
+
+    const std::vector<std::string>& Keyboard::GetTextCommands() const
+    {
+        return vecTextEntryCommands;
+    }
+
+    void Keyboard::ClearTextCommands()
+    {
+        vecTextEntryCommands.clear();
+    }
+
     const Button& Keyboard::GetKey(const olc::Key key) const
     {
 		return keys.at(size_t(key));
@@ -21063,6 +21250,55 @@ namespace olc::hw
         if (state)
         {
             keyCache[nKeyCacheIndex].push_back(key);
+
+            // Process Text entry
+            if (bTextEntryMode)
+            {
+                const auto& sym = GetKeyGlyph(key, GetKey(olc::Key::SHIFT).bHeld, GetKey(olc::Key::CTRL).bHeld);
+
+
+                // Check for command characters
+                if (sym == "_L") // Left
+                    nTextEntryCursorPos = std::max(0, nTextEntryCursorPos - 1);
+                else if (sym == "_R") // Right
+                    nTextEntryCursorPos = std::min(int32_t(sTextEntryString.size()), nTextEntryCursorPos + 1);
+                else if (sym == "\b") // Backspace
+                {
+                    // Still need 'back' to be consumed
+                    if (nTextEntryCursorPos > 0)
+                    {
+                        sTextEntryString.erase(nTextEntryCursorPos - 1, 1);
+                        nTextEntryCursorPos = std::max(0, nTextEntryCursorPos - 1);
+                    }
+                }
+                else if (sym == "_X" && size_t(nTextEntryCursorPos) < sTextEntryString.size()) // Del
+                {
+                    sTextEntryString.erase(nTextEntryCursorPos, 1);
+                }
+                /*else if (sym == "_U")
+                {
+               
+                }
+                else if (sym == "_D")
+                {
+
+                }*/
+                else if (sym == sTextEntryDelim)
+                {
+                    vecTextEntryCommands.push_back(sTextEntryString);
+                    sTextEntryString.clear();
+                    nTextEntryCursorPos = 0;
+                    if(bLeaveTextEntryModeUponDelimiter)
+                        DisableTextEntry();
+                }
+                else if (sym.size() == 1)
+                {
+                    sTextEntryString.insert(nTextEntryCursorPos, sym);
+                    nTextEntryCursorPos++;
+                }
+
+
+            }
         }
 	}
 
@@ -21094,6 +21330,7 @@ namespace olc::hw
 
         // Swap active cache index
         nKeyCacheIndex ^= 0x01;
+
     }
 }
 #define PGE_HW_KEYBOARD_IMPLEMENTED 1
